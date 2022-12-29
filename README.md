@@ -2,7 +2,7 @@
 
 Make unstructured documents work for you.
 
-- Avoid manual data entry with intelligent OCR technology that converts unstructured documents such as general ledgers and bank statements to actionable data.
+> Avoid manual data entry with intelligent OCR technology that converts unstructured documents such as general ledgers and bank statements to actionable data.
 
 ---
 
@@ -14,8 +14,8 @@ Make unstructured documents work for you.
 
 #### Supported General Ledger formats:
 
-- > Accounting CS (PDF Export)
+- Accounting CS (PDF Export)
 
 #### Supported Bank Statement formats:
 
-- > TODO
+- TODO
