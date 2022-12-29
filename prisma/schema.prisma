@@ -13,8 +13,8 @@ model File {
   name     String
   type     String
   size     Int
-  hash     String @unique
-  contents Bytes  @unique
+  hash     String
+  contents Bytes
   user     User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
@@ -51,6 +51,7 @@ model User {
   email         String?   @unique
   emailVerified DateTime?
   image         String?
+  permissions   String[]
   accounts      Account[]
   sessions      Session[]
   File          File[]

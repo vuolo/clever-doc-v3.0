@@ -26,7 +26,7 @@ const Home: NextPage = () => {
           </div>
           <div className="flex items-start gap-4">
             <Link
-              href="/bsca"
+              href="/tools/bsca"
               className="focus:ring-brand-500 relative inline-flex h-11 items-center rounded-md border border-slate-200 bg-brand-gold px-8 py-2 font-medium text-white transition-colors hover:bg-brand-gold-hover focus:outline-none focus:ring-2 focus:ring-offset-2"
             >
               Try BSCA

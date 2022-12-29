@@ -18,7 +18,7 @@ export default function Header({ selectedNav }: Props): JSX.Element {
         </Link>
         <nav className="flex items-center gap-6 sm:gap-8">
           <Link
-            href="/bsca"
+            href="/tools/bsca"
             className={`text-sm font-${
               selectedNav == "BSCA" ? "bold" : "medium"
             } hover:underline`}
