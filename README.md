@@ -1,6 +1,6 @@
 # Clever Doc
 
-Make unstructured documents work for you.
+## Make unstructured documents work for you.
 
 > Avoid manual data entry with intelligent OCR technology that converts unstructured documents such as general ledgers and bank statements to actionable data.
 
