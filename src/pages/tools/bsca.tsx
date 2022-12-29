@@ -4,7 +4,7 @@ import { Loader2 } from "lucide-react";
 
 import DynamicHead from "@/components/dynamic-head";
 import Header from "@/components/header";
-// import Main from "@/components/tools/bsca/main";
+import Main from "@/components/tools/bsca/main";
 import { userHasPermission } from "@/utils/auth";
 
 const BSCA: NextPage = () => {
@@ -25,7 +25,7 @@ const BSCA: NextPage = () => {
             <p>Loading...</p>
           </div>
         ) : permissionGranted ? (
-          <p>Welcome authenticated user</p> // <Main />
+          <Main />
         ) : (
           <p>
             You do not have access to this tool. Please reach out to Michael @{" "}
