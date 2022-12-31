@@ -14,8 +14,10 @@ model File {
   type     String
   size     Int
   hash     String
-  contents Bytes
+  contents String
   user     User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([hash, userId])
 }
 
 // Necessary for NextAuth.js

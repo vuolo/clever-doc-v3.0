@@ -104,9 +104,6 @@ export async function getServerSideProps(
   const providers = await getProviders();
   const csrfToken = await getCsrfToken(context);
 
-  console.log(typeof context);
-  console.log(context);
-
   const { req, res, query } = context;
   const session = await getSession({ req });
   const { callbackUrl } = query;
