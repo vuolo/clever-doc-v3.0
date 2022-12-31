@@ -1,14 +1,211 @@
+import { PDFDocument } from "pdf-lib";
+import {
+  DocumentProcessorServiceClient,
+  protos as GoogleProtos,
+} from "@google-cloud/documentai";
+import GoogleDocument = GoogleProtos.google.cloud.documentai.v1.Document;
+
+import { prisma } from "@/server/db/client";
 import { BankStatement } from "./BankStatement";
 import { GeneralLedger } from "./GeneralLedger";
+import type { Coordinates, TextShard } from "@/types/ocr";
 
-const PAGE_SPLIT_COUNT = 10;
+const NUM_PAGES_PER_SPLIT = 10;
+const projectId = "176698041005";
+const location = "us";
+const processorId = "143545f85669a6ef";
+const processorURL = `projects/${projectId}/locations/${location}/processors/${processorId}`;
+const client = new DocumentProcessorServiceClient();
 
-// TODO: rework to include user id in the url
-type ParseProps = {
-  url: string;
+type Props = {
   hash: string;
+  userId: string;
 };
 
-export async function parse({ url, hash }: ParseProps) {
-  return undefined;
+export async function parse({
+  hash,
+  userId,
+}: Props): Promise<BankStatement | GeneralLedger | undefined> {
+  // Get the PDF file from the database
+  const file = await prisma.file.findFirst({
+    where: {
+      userId,
+      hash,
+    },
+  });
+  if (!file) return;
+
+  const fileContents = file.contents.split("base64,")[1];
+  if (!fileContents) return;
+
+  // Split the PDF into multiple documents, because the Document AI processor can only process PDFs with a maximum of 10 pages
+  const splitPDFs = await splitBase64PDF(fileContents);
+  for (const splitPDF of splitPDFs) {
+    // Upload the PDF document to the Document AI processor
+    const request = {
+      name: processorURL,
+      rawDocument: {
+        content: splitPDF,
+        mimeType: "application/pdf",
+      },
+    };
+
+    // Recognizes text entities in the PDF document
+    const [result] = await client.processDocument(request);
+    const { document } = result;
+    if (!document) return;
+
+    // Get all of the document text as one big string
+    const { text, pages } = document;
+    if (!text || !pages) return;
+
+    // Get the text shards from the document
+    const textShardsByPage = [] as TextShard[][];
+    for (let i = 0; i < pages.length; i++) {
+      const page = pages[i] as GoogleDocument.Page;
+      const { lines } = page;
+      if (!lines) return;
+
+      const unsortedTextShards = [] as TextShard[];
+      for (const line of lines) {
+        const textShard = getTextShard(text, line, i);
+        if (textShard) unsortedTextShards.push(textShard);
+      }
+
+      // Sort the text shards into their visual order
+      const sortedTextShards = sortTextShards(unsortedTextShards);
+      textShardsByPage.push(sortedTextShards);
+    }
+
+    // TODO: Parse the text shards into a bank statement
+    const bankStatement = new BankStatement(textShardsByPage);
+  }
+
+  return;
+}
+
+// Sort the text shards into their visual order
+function sortTextShards(textShards: TextShard[]): TextShard[] {
+  // Sort by Y coordinate first
+  const sortedByY = textShards.sort(
+    (a, b) =>
+      a.boundingPoly.normalizedVertices.topLeft.y -
+      b.boundingPoly.normalizedVertices.topLeft.y
+  );
+
+  // Then for each Y coordinate that is no different than 0.01, sort by X coordinate
+  // Note: 0.01 is an arbitrary number that I chose to use as a threshold, so it may need to be adjusted in the future
+  return sortedByY.sort((a, b) =>
+    a.boundingPoly.normalizedVertices.topLeft.y -
+      b.boundingPoly.normalizedVertices.topLeft.y <=
+    0.01
+      ? a.boundingPoly.normalizedVertices.topLeft.x -
+        b.boundingPoly.normalizedVertices.topLeft.x
+      : 0
+  );
+}
+
+// Extract shards from the text field
+function getTextShard(
+  text: string,
+  textEntity:
+    | GoogleDocument.Page.IBlock
+    | GoogleDocument.Page.IParagraph
+    | GoogleDocument.Page.ILine
+    | GoogleDocument.Page.IToken,
+  page: number
+): TextShard | undefined {
+  // Ensure type safety
+  const textAnchor = textEntity.layout?.textAnchor;
+  if (
+    !textAnchor ||
+    !textAnchor.textSegments ||
+    textAnchor.textSegments.length === 0 ||
+    !textAnchor.textSegments[0] ||
+    !textEntity.layout ||
+    !textEntity.layout.boundingPoly ||
+    !textEntity.layout.boundingPoly.vertices ||
+    !textEntity.layout.boundingPoly.normalizedVertices
+  )
+    return;
+
+  // Note: The first shard in the document doesn't have the startIndex property
+  const startIndex = (textAnchor.textSegments[0].startIndex || 0) as number;
+  const endIndex = textAnchor.textSegments[0].endIndex as number;
+
+  const shardText = text.substring(startIndex, endIndex);
+
+  return {
+    text: shardText,
+    page: page,
+    indices: {
+      start: startIndex,
+      end: endIndex,
+    },
+    boundingPoly: {
+      vertices: {
+        topLeft: textEntity.layout.boundingPoly.vertices[3] as Coordinates,
+        topRight: textEntity.layout.boundingPoly.vertices[2] as Coordinates,
+        bottomLeft: textEntity.layout.boundingPoly.vertices[0] as Coordinates,
+        bottomRight: textEntity.layout.boundingPoly.vertices[1] as Coordinates,
+      },
+      normalizedVertices: {
+        topLeft: textEntity.layout.boundingPoly
+          .normalizedVertices[3] as Coordinates,
+        topRight: textEntity.layout.boundingPoly
+          .normalizedVertices[2] as Coordinates,
+        bottomLeft: textEntity.layout.boundingPoly
+          .normalizedVertices[0] as Coordinates,
+        bottomRight: textEntity.layout.boundingPoly
+          .normalizedVertices[1] as Coordinates,
+      },
+    },
+  };
+}
+
+async function splitBase64PDF(fileContents: string): Promise<string[]> {
+  // Decode the base64 file contents to a Uint8Array
+  const pdfBytes = Buffer.from(fileContents, "base64");
+
+  // Load the PDF document
+  const pdfDoc = await PDFDocument.load(pdfBytes);
+
+  // Get the total number of pages in the PDF
+  const numPages = pdfDoc.getPageCount();
+
+  // Initialize an array to store the split PDF documents
+  const splitPDFDocs = [] as PDFDocument[];
+
+  // Split the PDF into multiple documents, each containing `NUM_PAGES_PER_SPLIT` pages
+  for (let i = 0; i < numPages; i += NUM_PAGES_PER_SPLIT) {
+    // Create a new PDF document
+    const splitPDFDoc = await PDFDocument.create();
+
+    // Get the indices of the pages to be copied
+    const pageIndices = [];
+    for (let j = 0; j < NUM_PAGES_PER_SPLIT; j++) {
+      const pageIndex = i + j;
+      if (pageIndex < numPages) {
+        pageIndices.push(pageIndex);
+      }
+    }
+
+    // Copy the pages from the original PDF to the new document
+    const copiedPages = await splitPDFDoc.copyPages(pdfDoc, pageIndices);
+    copiedPages.forEach((page) => {
+      splitPDFDoc.addPage(page);
+    });
+
+    // Add the new document to the array
+    splitPDFDocs.push(splitPDFDoc);
+  }
+
+  // Return the array of split PDF documents
+  // return splitPDFDocs;
+
+  // Return the array of split PDF documents' base64-encoded contents
+  const base64SplitPDFDocs = [] as string[];
+  for (const doc of splitPDFDocs)
+    base64SplitPDFDocs.push(await doc.saveAsBase64());
+  return base64SplitPDFDocs;
 }

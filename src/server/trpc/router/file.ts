@@ -9,14 +9,14 @@ export const fileRouter = router({
     .input(
       z.object({
         userId: z.string().cuid(),
-        id: z.string().cuid(),
+        hash: z.string().cuid(),
       })
     )
     .query(({ input }) => {
-      const file = prisma.file.findMany({
+      const file = prisma.file.findFirst({
         where: {
           userId: input.userId,
-          id: input.id,
+          hash: input.hash,
         },
       });
 

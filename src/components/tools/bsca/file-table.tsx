@@ -149,6 +149,8 @@ export default function FileTable({
     getCoreRowModel: getCoreRowModel(),
   });
 
+  // TODO: maybe restyle the table background color since we are now using a white background rather than #efefef.
+
   return (
     <div className="w-full p-2">
       <table className="w-full items-center">

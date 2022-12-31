@@ -9,6 +9,7 @@ export const bscaRouter = router({
       z.object({
         url: z.string().url(),
         hash: z.string(),
+        userId: z.string(),
       })
     )
     .mutation(async ({ input }) => {

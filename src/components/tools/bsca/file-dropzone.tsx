@@ -118,7 +118,9 @@ export default function FileDropzone({ codeTransactions }: Props): JSX.Element {
         return console.error({ cause }, "Failed to upload file");
       }
 
-      const url = `${window.location.protocol}//${window.location.host}/api/uploads/${hash}`;
+      const url = `${window.location.protocol}//${
+        window.location.host
+      }/api/uploads/${sessionData?.user?.id ?? "unknown-user"}/${hash}`;
       newStoredFile.url = url;
       newStoredFile.uploading = false;
 
@@ -131,7 +133,7 @@ export default function FileDropzone({ codeTransactions }: Props): JSX.Element {
 
       // Parse the file with adobe sdk
       const extractedStructure = await parseFile
-        .mutateAsync({ url, hash })
+        .mutateAsync({ url, hash, userId: sessionData?.user?.id ?? "" })
         .catch(() => {
           newStoredFile.parsing = false;
           return;
@@ -143,7 +145,7 @@ export default function FileDropzone({ codeTransactions }: Props): JSX.Element {
         return;
       }
 
-      // console.log(extractedStructure);
+      console.log(extractedStructure);
 
       // Updated stored file
       setStoredFiles((prev) => [
