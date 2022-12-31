@@ -7,6 +7,16 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+model OCRResult {
+  id         String @id @default(auto()) @map("_id") @db.ObjectId
+  userId     String @db.ObjectId
+  hash       String
+  textShards Json[]
+  user       User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([hash, userId])
+}
+
 model File {
   id       String @id @default(auto()) @map("_id") @db.ObjectId
   userId   String @db.ObjectId
@@ -48,15 +58,16 @@ model Session {
 }
 
 model User {
-  id            String    @id @default(auto()) @map("_id") @db.ObjectId
+  id            String      @id @default(auto()) @map("_id") @db.ObjectId
   name          String?
-  email         String?   @unique
+  email         String?     @unique
   emailVerified DateTime?
   image         String?
   permissions   String[]
   accounts      Account[]
   sessions      Session[]
   File          File[]
+  OCRResult     OCRResult[]
 }
 
 model VerificationToken {

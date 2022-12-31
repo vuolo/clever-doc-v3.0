@@ -115,6 +115,11 @@ export default function FileDropzone({ codeTransactions }: Props): JSX.Element {
       try {
         await uploadFile.mutateAsync(input);
       } catch (cause) {
+        newStoredFile.uploading = false;
+        setStoredFiles((prev) => [
+          ...new Map([...prev, newStoredFile].map((f) => [f.hash, f])).values(),
+        ]);
+
         return console.error({ cause }, "Failed to upload file");
       }
 
@@ -136,16 +141,23 @@ export default function FileDropzone({ codeTransactions }: Props): JSX.Element {
         .mutateAsync({ url, hash, userId: sessionData?.user?.id ?? "" })
         .catch(() => {
           newStoredFile.parsing = false;
+          setStoredFiles((prev) => [
+            ...new Map(
+              [...prev, newStoredFile].map((f) => [f.hash, f])
+            ).values(),
+          ]);
           return;
         });
 
+      newStoredFile.parsing = false;
+
       if (!extractedStructure) {
-        newStoredFile.parsing = false;
         toast.error("Failed to parse file");
+        setStoredFiles((prev) => [
+          ...new Map([...prev, newStoredFile].map((f) => [f.hash, f])).values(),
+        ]);
         return;
       }
-
-      console.log(extractedStructure);
 
       // Updated stored file
       setStoredFiles((prev) => [

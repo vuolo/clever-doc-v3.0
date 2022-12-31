@@ -41,8 +41,15 @@ export async function parse({
   // Split the PDF into multiple documents, because the Document AI processor can only process PDFs with a maximum of 10 pages
   const splitPDFs = await splitBase64PDF(fileContents);
 
-  // Process each split PDF document and get the text shards
-  const textShardsByPage = [] as TextShard[][];
+  // Look in the OCR Result cache and pull the text shards from there if they exist
+  const cachedOCRResult = await prisma.oCRResult.findFirst({
+    where: {
+      userId,
+      hash,
+    },
+  });
+  if (cachedOCRResult)
+    return parseTextShards(cachedOCRResult.textShards as TextShard[][]);
 
   // Upload the PDF document(s) to the Document AI processor
   const requests = splitPDFs.map((splitPDF) => {
@@ -59,6 +66,8 @@ export async function parse({
   // Use Promise.all() to speed up the processing whenever there are multiple split PDFs
   const results = await Promise.all(requests);
 
+  // Process each split PDF document and get the text shards, storing them in an array representing each page
+  const textShards = [] as TextShard[][];
   results.forEach((result) => {
     const { document } = result[0];
     if (!document) return;
@@ -80,20 +89,27 @@ export async function parse({
 
       // Sort the text shards into their visual order
       const sortedTextShards = sortTextShards(unsortedTextShards);
-      textShardsByPage.push(sortedTextShards);
+      textShards.push(sortedTextShards);
     });
   });
 
-  // console.log(
-  //   textShardsByPage[textShardsByPage.length - 1][
-  //     textShardsByPage[textShardsByPage.length - 1]?.length - 1
-  //   ]
-  // );
+  // Store the text shards in the OCR cache
+  await prisma.oCRResult.create({
+    data: {
+      userId,
+      hash,
+      textShards,
+    },
+  });
 
-  // TODO: Parse the text shards into a bank statement
-  // const bankStatement = new BankStatement(textShardsByPage);
+  return parseTextShards(textShards);
+}
 
-  return;
+// Parse the text shards into a bank statement or general ledger
+function parseTextShards(
+  textShards: TextShard[][]
+): BankStatement | GeneralLedger | undefined {
+  return textShards;
 }
 
 // Sort the text shards into their visual order
