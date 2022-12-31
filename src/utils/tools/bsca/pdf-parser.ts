@@ -40,8 +40,12 @@ export async function parse({
 
   // Split the PDF into multiple documents, because the Document AI processor can only process PDFs with a maximum of 10 pages
   const splitPDFs = await splitBase64PDF(fileContents);
-  for (const splitPDF of splitPDFs) {
-    // Upload the PDF document to the Document AI processor
+
+  // Process each split PDF document and get the text shards
+  const textShardsByPage = [] as TextShard[][];
+
+  // Upload the PDF document(s) to the Document AI processor
+  const requests = splitPDFs.map((splitPDF) => {
     const request = {
       name: processorURL,
       rawDocument: {
@@ -49,10 +53,14 @@ export async function parse({
         mimeType: "application/pdf",
       },
     };
+    return client.processDocument(request);
+  });
 
-    // Recognizes text entities in the PDF document
-    const [result] = await client.processDocument(request);
-    const { document } = result;
+  // Use Promise.all() to speed up the processing whenever there are multiple split PDFs
+  const results = await Promise.all(requests);
+
+  results.forEach((result) => {
+    const { document } = result[0];
     if (!document) return;
 
     // Get all of the document text as one big string
@@ -60,9 +68,7 @@ export async function parse({
     if (!text || !pages) return;
 
     // Get the text shards from the document
-    const textShardsByPage = [] as TextShard[][];
-    for (let i = 0; i < pages.length; i++) {
-      const page = pages[i] as GoogleDocument.Page;
+    pages.forEach((page, i) => {
       const { lines } = page;
       if (!lines) return;
 
@@ -75,11 +81,17 @@ export async function parse({
       // Sort the text shards into their visual order
       const sortedTextShards = sortTextShards(unsortedTextShards);
       textShardsByPage.push(sortedTextShards);
-    }
+    });
+  });
 
-    // TODO: Parse the text shards into a bank statement
-    const bankStatement = new BankStatement(textShardsByPage);
-  }
+  // console.log(
+  //   textShardsByPage[textShardsByPage.length - 1][
+  //     textShardsByPage[textShardsByPage.length - 1]?.length - 1
+  //   ]
+  // );
+
+  // TODO: Parse the text shards into a bank statement
+  // const bankStatement = new BankStatement(textShardsByPage);
 
   return;
 }
