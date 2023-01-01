@@ -1,13 +1,47 @@
-import type { TextShard, TextShardGroup } from "@/types/ocr";
+import type {
+  BoundingPolyCoordinates,
+  TextShard,
+  TextShardGroup,
+} from "@/types/ocr";
 
-export function getTextShardsAsLines(textShards: TextShard[][]) {
+// Check whether the bounding poly is within the specified range
+// Example: coordinate = "x", start = 0.1, end = 0.8, check if the coordinates are within 0.1 and 0.8 on the x-axis
+export function isBoundingPolyWithinRange(
+  coordinates: BoundingPolyCoordinates,
+  coordinate: "x" | "y",
+  start: number,
+  end: number
+) {
+  return (
+    coordinates.topLeft[coordinate] >= start &&
+    coordinates.topLeft[coordinate] <= end &&
+    coordinates.topRight[coordinate] >= start &&
+    coordinates.topRight[coordinate] <= end &&
+    coordinates.bottomLeft[coordinate] >= start &&
+    coordinates.bottomLeft[coordinate] <= end &&
+    coordinates.bottomRight[coordinate] >= start &&
+    coordinates.bottomRight[coordinate] <= end
+  );
+}
+
+export function getTextShardsAsLines(
+  textShards: TextShard[][],
+  separateByPage = true
+): TextShardGroup[] | TextShardGroup[][] {
   // Get all the text shards within the same line (0.01 Y coordinate difference threshold for now)
   const lines = [] as TextShardGroup[];
   let currentTextShardGroup = emptyTextShardGroup();
-  textShards.forEach((page) => {
-    page.forEach((textShard, index) => {
-      const previousTextShard = page[index - 1];
+  textShards.forEach((page, i) => {
+    page.forEach((textShard, j) => {
+      // If the text shard is on a different page, push the current text shard group to the lines array
+      if (separateByPage && currentTextShardGroup.page !== i) {
+        lines.push(currentTextShardGroup);
+        currentTextShardGroup = emptyTextShardGroup();
+        currentTextShardGroup.page = i;
+      }
 
+      // If the text shard is on the same page, check if it's on the same line as the previous text shard
+      const previousTextShard = page[j - 1];
       if (previousTextShard) {
         const yDifference = Math.abs(
           textShard.boundingPoly.normalizedVertices.bottomLeft.y -
@@ -19,6 +53,7 @@ export function getTextShardsAsLines(textShards: TextShard[][]) {
         } else {
           lines.push(currentTextShardGroup);
           currentTextShardGroup = emptyTextShardGroup();
+          currentTextShardGroup.page = i;
           currentTextShardGroup.textShards.push(textShard);
         }
       } else {
@@ -27,10 +62,30 @@ export function getTextShardsAsLines(textShards: TextShard[][]) {
     });
   });
 
+  // Make sure to add the very last line to the lines array
+  lines.push(currentTextShardGroup);
+
   // Then, combine the furthest left and furthest right bounding boxes to get the line's combined bounding box
   lines.forEach((line) => {
     line.boundingPoly = getCombinedBoundingPoly(line);
   });
+
+  // If separateByPage is true, then separate the lines by page
+  if (separateByPage) {
+    const linesByPage = [] as TextShardGroup[][];
+    let currentPage = 0;
+    let currentLines = [] as TextShardGroup[];
+    lines.forEach((line) => {
+      if (line.page !== currentPage) {
+        linesByPage.push(currentLines);
+        currentLines = [];
+        currentPage = line.page;
+      }
+      currentLines.push(line);
+    });
+    linesByPage.push(currentLines);
+    return linesByPage;
+  }
 
   return lines;
 }
@@ -149,6 +204,7 @@ function getCombinedBoundingPoly(
 function emptyTextShardGroup(): TextShardGroup {
   return {
     textShards: [],
+    page: 0,
     boundingPoly: {
       vertices: {
         topLeft: { x: 0, y: 0 },

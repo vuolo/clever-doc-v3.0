@@ -117,8 +117,7 @@ function parseTextShards(
   const generalLedger = new GeneralLedger(textShards);
   if (generalLedger.company) return generalLedger;
 
-  return getTextShardsAsLines(textShards);
-  return textShards;
+  return;
 }
 
 // Sort the text shards into their visual order

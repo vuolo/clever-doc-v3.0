@@ -5,12 +5,14 @@ import type {
   GeneralLedgerAccount,
   Period,
 } from "@/types/tools/bsca/general-ledger";
-import type { TextShard } from "@/types/ocr";
+import type { TextShard, TextShardGroup } from "@/types/ocr";
 import type { StoredFile } from "@/types/misc";
+import { getTextShardsAsLines } from "@/utils/ocr";
 
 export class GeneralLedger {
   readonly class = "GeneralLedger";
   readonly #textShards: TextShard[][];
+  readonly #textShardGroups: TextShardGroup[][];
   glFormat!: string;
   company!: Company;
   period!: Period;
@@ -19,10 +21,13 @@ export class GeneralLedger {
 
   constructor(textShards: TextShard[][]) {
     this.#textShards = textShards;
+    this.#textShardGroups = getTextShardsAsLines(
+      textShards
+    ) as TextShardGroup[][];
     // Uncomment this below to pass the OCR data to the client. This is not recommended, so use for debugging only.
     // this.textShards = this.#textShards;
+    // this.textShardGroups = this.#textShardGroups;
 
-    // TODO: rework all of this to use the new OCR data structure
     this.parse();
   }
 
@@ -31,11 +36,11 @@ export class GeneralLedger {
 
     this.parseCompany();
     this.parsePeriod();
-    this.parseAccounts();
+    // this.parseAccounts();
   }
 
   parseGLFormat() {
-    if (accountingcs.isGLFormat(this.#textShards))
+    if (accountingcs.isGLFormat(this.#textShardGroups))
       this.glFormat = "accountingcs";
 
     return this.glFormat !== undefined;
@@ -43,12 +48,12 @@ export class GeneralLedger {
 
   parseCompany() {
     if (this.glFormat === "accountingcs")
-      this.company = accountingcs.parseCompany(this.#textShards);
+      this.company = accountingcs.parseCompany(this.#textShardGroups);
   }
 
   parsePeriod() {
     if (this.glFormat === "accountingcs")
-      this.period = accountingcs.parsePeriod(this.#textShards);
+      this.period = accountingcs.parsePeriod(this.#textShardGroups);
   }
 
   parseAccounts() {
@@ -56,7 +61,7 @@ export class GeneralLedger {
       // this.accounts = accountingcs.parseAccountsUsingTables(this.#textShards);
       // this.accounts = accountingcs.parseAccountsUsingText(this.#textShards);
       this.accounts = accountingcs.parseAccountsUsingTablesAndText(
-        this.#textShards
+        this.#textShardGroups
       );
   }
 }
