@@ -4,6 +4,24 @@ import type {
   TextShardGroup,
 } from "@/types/ocr";
 
+export function getTextShardGroupsWithinRange(
+  textShardGroups: TextShardGroup[][],
+  coordinate: "x" | "y",
+  start: number,
+  end: number
+) {
+  return textShardGroups.map((page) =>
+    page.filter((textShardGroup) =>
+      isBoundingPolyWithinRange(
+        textShardGroup.boundingPoly.normalizedVertices,
+        coordinate,
+        start,
+        end
+      )
+    )
+  );
+}
+
 // Check whether the bounding poly is within the specified range
 // Example: coordinate = "x", start = 0.1, end = 0.8, check if the coordinates are within 0.1 and 0.8 on the x-axis
 export function isBoundingPolyWithinRange(

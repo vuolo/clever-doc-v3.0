@@ -161,6 +161,15 @@ export default function FileDropzone({ codeTransactions }: Props): JSX.Element {
 
       console.log(extractedStructure);
 
+      // Assign the detected visual structure to the file
+      if (extractedStructure.class === "BankStatement")
+        newStoredFile.structure = `Bank Statement (${extractedStructure.bank})`;
+      else if (extractedStructure.class === "GeneralLedger")
+        newStoredFile.structure = `General Ledger (${extractedStructure.company.name})`;
+
+      newStoredFile.extractedStructure = extractedStructure;
+      extractedStructure.file = newStoredFile;
+
       // Updated stored file
       setStoredFiles((prev) => [
         ...new Map([...prev, newStoredFile].map((f) => [f.hash, f])).values(),

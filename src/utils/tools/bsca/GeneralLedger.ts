@@ -36,7 +36,7 @@ export class GeneralLedger {
 
     this.parseCompany();
     this.parsePeriod();
-    // this.parseAccounts();
+    this.parseAccounts();
   }
 
   parseGLFormat() {
@@ -58,10 +58,6 @@ export class GeneralLedger {
 
   parseAccounts() {
     if (this.glFormat === "accountingcs")
-      // this.accounts = accountingcs.parseAccountsUsingTables(this.#textShards);
-      // this.accounts = accountingcs.parseAccountsUsingText(this.#textShards);
-      this.accounts = accountingcs.parseAccountsUsingTablesAndText(
-        this.#textShardGroups
-      );
+      this.accounts = accountingcs.parseAccounts(this.#textShardGroups);
   }
 }
