@@ -46,7 +46,7 @@ export function getTextShardsAsLines(
   textShards: TextShard[][],
   separateByPage = true
 ): TextShardGroup[] | TextShardGroup[][] {
-  // Get all the text shards within the same line (0.01 Y coordinate difference threshold for now)
+  // Get all the text shards within the same lines
   const lines = [] as TextShardGroup[];
   let currentTextShardGroup = emptyTextShardGroup();
   textShards.forEach((page, i) => {
@@ -66,16 +66,44 @@ export function getTextShardsAsLines(
             previousTextShard.boundingPoly.normalizedVertices.bottomLeft.y
         );
 
+        // (0.01 Y coordinate difference threshold for now)
         if (yDifference <= 0.01) {
           currentTextShardGroup.textShards.push(textShard);
         } else {
-          lines.push(currentTextShardGroup);
-          currentTextShardGroup = emptyTextShardGroup();
-          currentTextShardGroup.page = i;
-          currentTextShardGroup.textShards.push(textShard);
+          let lineFound = false;
+          // Check if the text shard belongs to a line that was already created
+          for (let k = lines.length - 1; k >= 0; k--) {
+            const line = lines[k];
+            if (!line) continue;
+            if (line.page !== i) {
+              break;
+            }
+            const lastTextShardInLine =
+              line.textShards[line.textShards.length - 1];
+            if (!lastTextShardInLine) continue;
+            const yDifference = Math.abs(
+              textShard.boundingPoly.normalizedVertices.bottomLeft.y -
+                lastTextShardInLine.boundingPoly.normalizedVertices.bottomLeft.y
+            );
+            if (yDifference <= 0.01) {
+              // Add the text shard to the previous line
+              line.textShards.push(textShard);
+              lineFound = true;
+              break;
+            }
+          }
+          // If no matching line was found, create a new line
+          if (!lineFound) {
+            currentTextShardGroup = emptyTextShardGroup();
+            currentTextShardGroup.page = i;
+            currentTextShardGroup.textShards.push(textShard);
+            lines.push(currentTextShardGroup);
+          }
         }
       } else {
         currentTextShardGroup.textShards.push(textShard);
+        lines.push(currentTextShardGroup);
+        currentTextShardGroup = emptyTextShardGroup(i);
       }
     });
   });
@@ -219,10 +247,10 @@ function getCombinedBoundingPoly(
   };
 }
 
-function emptyTextShardGroup(): TextShardGroup {
+function emptyTextShardGroup(page = 0): TextShardGroup {
   return {
     textShards: [],
-    page: 0,
+    page,
     boundingPoly: {
       vertices: {
         topLeft: { x: 0, y: 0 },

@@ -25,8 +25,8 @@ export class GeneralLedger {
       textShards
     ) as TextShardGroup[][];
     // Uncomment this below to pass the OCR data to the client. This is not recommended, so use for debugging only.
-    // this.textShards = this.#textShards;
-    // this.textShardGroups = this.#textShardGroups;
+    this.textShards = this.#textShards;
+    this.textShardGroups = this.#textShardGroups;
 
     this.parse();
   }

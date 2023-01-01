@@ -115,9 +115,8 @@ function parseTextShards(
   // if (bankStatement.bank) return bankStatement;
 
   const generalLedger = new GeneralLedger(textShards);
-  if (generalLedger.company) return generalLedger;
-
-  return;
+  // if (generalLedger.company) return generalLedger;
+  return generalLedger;
 }
 
 // Sort the text shards into their visual order

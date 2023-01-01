@@ -125,11 +125,38 @@ export function parsePeriod(textShardGroups: TextShardGroup[][]): Period {
 export function parseAccounts(
   textShardGroups: TextShardGroup[][]
 ): GeneralLedgerAccount[] {
+  // Limit the textShardGroups to the body of the document
   const textShardGroups_body = getTextShardGroupsWithinRange(
     textShardGroups,
     "y",
     0.11,
     0.96
   );
-  return textShardGroups_body;
+
+  // Parse the accounts
+  const accounts = [] as GeneralLedgerAccount[];
+  for (const page of textShardGroups_body) {
+    for (const textShardGroup of page) {
+      for (const textShard of textShardGroup.textShards) {
+        // Check if there is text within x bounds of 0.65 to 0.75, this represents the accounts' beginning balance
+        if (
+          isBoundingPolyWithinRange(
+            textShard.boundingPoly.normalizedVertices,
+            "x",
+            0.65,
+            0.75
+          )
+        ) {
+          const lineText = textShard.text.replace(NEWLINES_REGEX, "") ?? "";
+          console.log(lineText);
+          console.log(
+            textShardGroup.textShards.map((t) =>
+              t.text.replace(NEWLINES_REGEX, "")
+            )
+          );
+          console.log();
+        }
+      }
+    }
+  }
 }
