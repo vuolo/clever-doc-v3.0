@@ -18,6 +18,8 @@ export type GeneralLedgerAccount = {
 
 export type GeneralLedgerEntry = {
   date: string;
-  description: string;
-  amount: number;
+  description?: string;
+  reference?: string;
+  journal?: string;
+  amount?: number;
 };

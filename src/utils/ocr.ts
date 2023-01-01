@@ -4,12 +4,39 @@ import type {
   TextShardGroup,
 } from "@/types/ocr";
 
+export function getTextShardWithinRange(
+  textShards: TextShard[],
+  coordinate: "x" | "y",
+  start: number,
+  end: number
+): TextShard | undefined {
+  // Return the first instance
+  return textShards.find((textShard) =>
+    isBoundingPolyWithinRange(
+      textShard.boundingPoly.normalizedVertices,
+      coordinate,
+      start,
+      end
+    )
+  );
+
+  // Return all instances
+  // return textShards.filter((textShard) =>
+  //   isBoundingPolyWithinRange(
+  //     textShard.boundingPoly.normalizedVertices,
+  //     coordinate,
+  //     start,
+  //     end
+  //   )
+  // );
+}
+
 export function getTextShardGroupsWithinRange(
   textShardGroups: TextShardGroup[][],
   coordinate: "x" | "y",
   start: number,
   end: number
-) {
+): TextShardGroup[][] {
   return textShardGroups.map((page) =>
     page.filter((textShardGroup) =>
       isBoundingPolyWithinRange(

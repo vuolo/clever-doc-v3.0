@@ -9,11 +9,15 @@ import type {
 import type { TextShard, TextShardGroup } from "@/types/ocr";
 import {
   getTextShardGroupsWithinRange,
+  getTextShardWithinRange,
   isBoundingPolyWithinRange,
 } from "@/utils/ocr";
 
+const TOTALS_REGEX = /Totals for (\S+)/;
+const DATE_REGEX = /^\d{2}\/\d{2}\/\d{2}/;
 const PERIOD_REGEX = /(\w+ \d{1,2}, \d{4}) ?- ?(\w+ \d{1,2}, \d{4})/;
 const NEWLINES_REGEX = /\r?\n|\r/g;
+const PARENTHESIS_REGEX = /^\((.+)\)$/;
 
 export function isGLFormat(textShardGroups: TextShardGroup[][]): boolean {
   for (const textShardGroup of textShardGroups) {
@@ -36,10 +40,12 @@ export function isGLFormat(textShardGroups: TextShardGroup[][]): boolean {
         0.07
       )
     ) {
-      const lineText =
-        textShardGroup[1].textShards[0]?.text.replace(NEWLINES_REGEX, "") ?? "";
+      const shardText =
+        textShardGroup[1].textShards[0]?.text
+          .replace(NEWLINES_REGEX, "")
+          .trim() ?? "";
 
-      if (lineText == "General Ledger") return true;
+      if (shardText == "General Ledger") return true;
     }
   }
 
@@ -58,11 +64,13 @@ export function parseCompany(textShardGroups: TextShardGroup[][]): Company {
         0.045
       )
     ) {
-      const lineText =
-        textShardGroup[0].textShards[0]?.text.replace(NEWLINES_REGEX, "") ?? "";
+      const shardText =
+        textShardGroup[0].textShards[0]?.text
+          .replace(NEWLINES_REGEX, "")
+          .trim() ?? "";
 
       return {
-        name: lineText,
+        name: shardText,
       };
     }
   }
@@ -90,10 +98,12 @@ export function parsePeriod(textShardGroups: TextShardGroup[][]): Period {
         0.073
       )
     ) {
-      const lineText =
-        textShardGroup[2].textShards[0]?.text.replace(NEWLINES_REGEX, "") ?? "";
+      const shardText =
+        textShardGroup[2].textShards[0]?.text
+          .replace(NEWLINES_REGEX, "")
+          .trim() ?? "";
 
-      const match = PERIOD_REGEX.exec(lineText);
+      const match = PERIOD_REGEX.exec(shardText);
       if (match) {
         const startDate = match[1];
         const endDate = match[2];
@@ -127,18 +137,20 @@ export function parseAccounts(
 ): GeneralLedgerAccount[] {
   // Limit the textShardGroups to the body of the document
   const textShardGroups_body = getTextShardGroupsWithinRange(
-    textShardGroups,
+    getTextShardGroupsWithinRange(textShardGroups, "x", 0.02, 0.97),
     "y",
     0.11,
     0.96
   );
 
   // Parse the accounts
-  const accounts = [] as GeneralLedgerAccount[];
+  let accounts = [] as GeneralLedgerAccount[],
+    curEntries = [] as GeneralLedgerEntry[],
+    curAccountNumber = "";
   for (const page of textShardGroups_body) {
     for (const textShardGroup of page) {
       for (const textShard of textShardGroup.textShards) {
-        // Check if there is text within x bounds of 0.65 to 0.75, this represents the accounts' beginning balance
+        // Check fore the accounts' beginning balance
         if (
           isBoundingPolyWithinRange(
             textShard.boundingPoly.normalizedVertices,
@@ -147,19 +159,168 @@ export function parseAccounts(
             0.75
           )
         ) {
-          const lineText = textShard.text.replace(NEWLINES_REGEX, "") ?? "";
-          console.log(lineText);
-          // format can be [ '2163', 'BANK ATLANTIC- LOC', '0.00' ] or [ '2163 BANK ATLANTIC- LOC', '0.00' ] for example...
-          // make sure to combine all the contents of the array except the last one for the account number and name
-          // and use the last one for the beginning balances
-          console.log(
-            textShardGroup.textShards.map((t) =>
-              t.text.replace(NEWLINES_REGEX, "")
-            )
+          const shardText = textShard.text.replace(NEWLINES_REGEX, "").trim();
+          const lineText = textShardGroup.textShards.map((t) =>
+            t.text.replace(NEWLINES_REGEX, "")
           );
-          console.log();
+
+          // Format can be [ '2163', 'BANK ATLANTIC- LOC', '0.00' ] or [ '2163 BANK ATLANTIC- LOC', '0.00' ] for example...
+          // Make sure to combine all the contents of the array except the last one for the account number and name
+          // and use the last one for the beginning balances
+          const beginningBalance =
+            parseFloat(
+              shardText.replace(/,/g, "").replace(PARENTHESIS_REGEX, "$1")
+            ) * (shardText.includes("(") ? -1 : 1);
+
+          // Combine all the text shards except the last one
+          const accountNumberAndName = lineText
+            .slice(0, lineText.length - 1)
+            .join(" ")
+            .trim();
+          const accountNumber =
+            accountNumberAndName.split(" ")[0] ?? accountNumberAndName; // Sometimes (very rarely) the account name isn't present
+          const accountName = accountNumberAndName
+            .split(" ")
+            .slice(1)
+            .join(" ");
+
+          // If the account number is different than the current account number, then we have reached a new account
+          if (!doesAccountNumberExistInAccounts(accounts, accountNumber))
+            accounts = addAccount(
+              accounts,
+              accountName,
+              accountNumber,
+              beginningBalance
+            );
+          curAccountNumber = accountNumber ?? "Unknown";
+        }
+
+        // Record the entries by first looking for the date
+        if (
+          isBoundingPolyWithinRange(
+            textShard.boundingPoly.normalizedVertices,
+            "x",
+            0.04,
+            0.11
+          )
+        ) {
+          const shardText = textShard.text.replace(NEWLINES_REGEX, "").trim();
+
+          const dateMatch = shardText.match(DATE_REGEX);
+          if (dateMatch && dateMatch.index !== undefined) {
+            const date = shardText.slice(dateMatch.index, dateMatch.index + 8);
+            const dateFormatted = moment(date, "MM/DD/YY").format("MM/DD/YYYY");
+
+            const reference = getTextShardWithinRange(
+              textShardGroup.textShards,
+              "x",
+              0.14,
+              0.22
+            );
+            const journal = getTextShardWithinRange(
+              textShardGroup.textShards,
+              "x",
+              0.23,
+              0.29
+            );
+            const description = getTextShardWithinRange(
+              textShardGroup.textShards,
+              "x",
+              0.29,
+              0.66
+            );
+            const amount = getTextShardWithinRange(
+              textShardGroup.textShards,
+              "x",
+              0.74,
+              0.855
+            );
+
+            const entry = {
+              date: dateFormatted,
+              description: description?.text.replace(NEWLINES_REGEX, "").trim(),
+              reference:
+                (reference?.text.split(" ") ?? []).length == 1
+                  ? reference?.text.replace(NEWLINES_REGEX, "").trim()
+                  : undefined,
+              journal: journal?.text.replace(NEWLINES_REGEX, "").trim(),
+              amount: amount
+                ? parseFloat(
+                    amount.text
+                      .replace(NEWLINES_REGEX, "")
+                      .trim()
+                      .replace(/,/g, "")
+                      .replace(PARENTHESIS_REGEX, "$1")
+                  ) * (amount.text.includes("(") ? -1 : 1)
+                : undefined,
+            };
+            curEntries.push(entry);
+          }
+        }
+
+        // Check for the totals, which marks the end of the entries for the account
+        if (
+          isBoundingPolyWithinRange(
+            textShard.boundingPoly.normalizedVertices,
+            "x",
+            0.45,
+            0.63
+          )
+        ) {
+          const shardText = textShard.text.replace(NEWLINES_REGEX, "").trim();
+
+          const totalsMatch = TOTALS_REGEX.exec(shardText);
+          if (totalsMatch && totalsMatch[1]) {
+            const accountNumber = totalsMatch[1];
+
+            // Only push entries if the totals' account number matches the current account number (meaning the entries we have been collecting are accurate and for this account)
+            const account = accounts.find((a) => a.number == accountNumber);
+            if (account?.number == curAccountNumber) {
+              account.entries.push(...curEntries);
+              curAccountNumber = "";
+            } else {
+              const account = accounts.find(
+                (a) => a.number == curAccountNumber
+              );
+              if (account) curAccountNumber = accountNumber;
+              else {
+                accounts.push({
+                  name: "Unknown",
+                  number: curAccountNumber,
+                  entries: [],
+                });
+              }
+            }
+
+            // Clear the current entries. We just found the totals, so time to start a record a new account's entries
+            curEntries = [];
+          }
         }
       }
     }
   }
+
+  return accounts;
+}
+
+function doesAccountNumberExistInAccounts(
+  accounts: GeneralLedgerAccount[],
+  accountNumber = "Unknown"
+) {
+  return accounts.find((a) => a.number == accountNumber);
+}
+
+function addAccount(
+  accounts: GeneralLedgerAccount[],
+  name = "Unknown",
+  number = "Unknown",
+  beginningBalance?: number,
+  entries: GeneralLedgerEntry[] = []
+): GeneralLedgerAccount[] {
+  accounts.push({
+    name,
+    number,
+    entries,
+  });
+  return accounts;
 }

@@ -17,6 +17,7 @@ export class GeneralLedger {
   company!: Company;
   period!: Period;
   accounts!: GeneralLedgerAccount[];
+  distributionCount?: number; // This represents the total number of entries, used check if the total number of entries in the account reconcile
   file?: StoredFile;
 
   constructor(textShards: TextShard[][]) {
@@ -37,6 +38,8 @@ export class GeneralLedger {
     this.parseCompany();
     this.parsePeriod();
     this.parseAccounts();
+
+    // TODO: Check if the total number of entries in the account reconcile with the distribution count
   }
 
   parseGLFormat() {
