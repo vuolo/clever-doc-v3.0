@@ -13,6 +13,7 @@ import {
   isBoundingPolyWithinRange,
 } from "@/utils/ocr";
 
+const DISTRIBUTION_COUNT_REGEX = /Distribution count = (\d+)/;
 const TOTALS_REGEX = /Totals for (\S+)/;
 const DATE_REGEX = /^\d{2}\/\d{2}\/\d{2}/;
 const PERIOD_REGEX = /(\w+ \d{1,2}, \d{4}) ?- ?(\w+ \d{1,2}, \d{4})/;
@@ -301,6 +302,42 @@ export function parseAccounts(
   }
 
   return accounts;
+}
+
+export function parseDistributionCount(
+  textShardGroups: TextShardGroup[][]
+): number | undefined {
+  const lastPage = textShardGroups[textShardGroups.length - 1];
+  if (!lastPage) return;
+
+  // Check for the distribution count on the last page
+  for (const textShardGroup of lastPage) {
+    for (const textShard of textShardGroup.textShards) {
+      if (
+        isBoundingPolyWithinRange(
+          textShard.boundingPoly.normalizedVertices,
+          "x",
+          0.025,
+          0.22
+        )
+      ) {
+        const shardText = textShard.text.replace(NEWLINES_REGEX, "").trim();
+
+        if (shardText.includes("Distribution count")) {
+          const lineText = textShardGroup.textShards.map((t) =>
+            t.text.replace(NEWLINES_REGEX, "")
+          );
+          const joinedLineText = lineText.join(" ");
+
+          const distributionCountMatch = joinedLineText.match(
+            DISTRIBUTION_COUNT_REGEX
+          );
+          if (distributionCountMatch && distributionCountMatch[1])
+            return parseInt(distributionCountMatch[1]);
+        }
+      }
+    }
+  }
 }
 
 function doesAccountNumberExistInAccounts(

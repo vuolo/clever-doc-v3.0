@@ -135,9 +135,6 @@ export function getTextShardsAsLines(
     });
   });
 
-  // Make sure to add the very last line to the lines array
-  lines.push(currentTextShardGroup);
-
   // Then, combine the furthest left and furthest right bounding boxes to get the line's combined bounding box
   lines.forEach((line) => {
     line.boundingPoly = getCombinedBoundingPoly(line);

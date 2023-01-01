@@ -26,8 +26,8 @@ export class GeneralLedger {
       textShards
     ) as TextShardGroup[][];
     // Uncomment this below to pass the OCR data to the client. This is not recommended, so use for debugging only.
-    this.textShards = this.#textShards;
-    this.textShardGroups = this.#textShardGroups;
+    // this.textShards = this.#textShards;
+    // this.textShardGroups = this.#textShardGroups;
 
     this.parse();
   }
@@ -38,8 +38,24 @@ export class GeneralLedger {
     this.parseCompany();
     this.parsePeriod();
     this.parseAccounts();
+    this.parseDistributionCount();
 
-    // TODO: Check if the total number of entries in the account reconcile with the distribution count
+    // Check if the total number of entries in the account reconcile with the distribution count
+    if (this.distributionCount) {
+      let totalEntries = 0;
+      for (const account of this.accounts) {
+        totalEntries += account.entries.length;
+      }
+      if (totalEntries !== this.distributionCount) {
+        console.log(
+          `The total number of entries (${totalEntries}) does not match the distribution count (${this.distributionCount}).`
+        );
+      } else {
+        console.log(
+          `The total number of entries matches the distribution count (${this.distributionCount})!`
+        );
+      }
+    }
   }
 
   parseGLFormat() {
@@ -62,5 +78,12 @@ export class GeneralLedger {
   parseAccounts() {
     if (this.glFormat === "accountingcs")
       this.accounts = accountingcs.parseAccounts(this.#textShardGroups);
+  }
+
+  parseDistributionCount() {
+    if (this.glFormat === "accountingcs")
+      this.distributionCount = accountingcs.parseDistributionCount(
+        this.#textShardGroups
+      );
   }
 }
