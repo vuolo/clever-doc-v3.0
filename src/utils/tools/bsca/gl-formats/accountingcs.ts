@@ -327,7 +327,7 @@ export function parseDistributionCount(
           const lineText = textShardGroup.textShards.map((t) =>
             t.text.replace(NEWLINES_REGEX, "")
           );
-          const joinedLineText = lineText.join(" ");
+          const joinedLineText = lineText.join(" ").replace(/,/g, "");
 
           const distributionCountMatch = joinedLineText.match(
             DISTRIBUTION_COUNT_REGEX

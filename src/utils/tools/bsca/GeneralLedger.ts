@@ -40,22 +40,7 @@ export class GeneralLedger {
     this.parseAccounts();
     this.parseDistributionCount();
 
-    // Check if the total number of entries in the account reconcile with the distribution count
-    if (this.distributionCount) {
-      let totalEntries = 0;
-      for (const account of this.accounts) {
-        totalEntries += account.entries.length;
-      }
-      if (totalEntries !== this.distributionCount) {
-        console.log(
-          `[${this.company.name} - (from ${this.period.start} to ${this.period.end})] The total number of entries (${totalEntries}) does not match the distribution count (${this.distributionCount}).`
-        );
-      } else {
-        console.log(
-          `[${this.company.name} - (from ${this.period.start} to ${this.period.end})] The total number of entries matches the distribution count (${this.distributionCount})!`
-        );
-      }
-    }
+    this.reconcileEntries();
   }
 
   parseGLFormat() {
@@ -85,5 +70,25 @@ export class GeneralLedger {
       this.distributionCount = accountingcs.parseDistributionCount(
         this.#textShardGroups
       );
+  }
+
+  // Check if the total number of entries in the account reconcile with the distribution count
+  // TODO: look at MUNANOOR GL.pdf and ROYAL BEAUTY INC GL.pdf to see why they don't reconcile...
+  reconcileEntries() {
+    if (this.distributionCount) {
+      let totalEntries = 0;
+      for (const account of this.accounts) {
+        totalEntries += account.entries.length;
+      }
+      if (totalEntries !== this.distributionCount) {
+        console.log(
+          `[${this.company.name} - (from ${this.period.start} to ${this.period.end})] The total number of entries (${totalEntries}) does not match the distribution count (${this.distributionCount}).`
+        );
+      } else {
+        console.log(
+          `[${this.company.name} - (from ${this.period.start} to ${this.period.end})] The total number of entries matches the distribution count (${this.distributionCount})!`
+        );
+      }
+    }
   }
 }
