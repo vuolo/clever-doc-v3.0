@@ -6,9 +6,10 @@ import {
 import GoogleDocument = GoogleProtos.google.cloud.documentai.v1.Document;
 
 import { prisma } from "@/server/db/client";
+import type { Coordinates, TextShard } from "@/types/ocr";
+import { getTextShardsAsLines } from "@/utils/ocr";
 import { BankStatement } from "./BankStatement";
 import { GeneralLedger } from "./GeneralLedger";
-import type { Coordinates, TextShard } from "@/types/ocr";
 
 const NUM_PAGES_PER_SPLIT = 10;
 const projectId = "176698041005";
@@ -109,6 +110,14 @@ export async function parse({
 function parseTextShards(
   textShards: TextShard[][]
 ): BankStatement | GeneralLedger | undefined {
+  // Check whether the document is a bank statement or general ledger
+  // const bankStatement = new BankStatement(textShards);
+  // if (bankStatement.bank) return bankStatement;
+
+  const generalLedger = new GeneralLedger(textShards);
+  if (generalLedger.company) return generalLedger;
+
+  return getTextShardsAsLines(textShards);
   return textShards;
 }
 
@@ -117,18 +126,18 @@ function sortTextShards(textShards: TextShard[]): TextShard[] {
   // Sort by Y coordinate first
   const sortedByY = textShards.sort(
     (a, b) =>
-      a.boundingPoly.normalizedVertices.topLeft.y -
-      b.boundingPoly.normalizedVertices.topLeft.y
+      a.boundingPoly.normalizedVertices.bottomLeft.y -
+      b.boundingPoly.normalizedVertices.bottomLeft.y
   );
 
   // Then for each Y coordinate that is no different than 0.01, sort by X coordinate
   // Note: 0.01 is an arbitrary number that I chose to use as a threshold, so it may need to be adjusted in the future
   return sortedByY.sort((a, b) =>
-    a.boundingPoly.normalizedVertices.topLeft.y -
-      b.boundingPoly.normalizedVertices.topLeft.y <=
+    a.boundingPoly.normalizedVertices.bottomLeft.y -
+      b.boundingPoly.normalizedVertices.bottomLeft.y <=
     0.01
-      ? a.boundingPoly.normalizedVertices.topLeft.x -
-        b.boundingPoly.normalizedVertices.topLeft.x
+      ? a.boundingPoly.normalizedVertices.bottomLeft.x -
+        b.boundingPoly.normalizedVertices.bottomLeft.x
       : 0
   );
 }

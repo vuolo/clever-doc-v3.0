@@ -9,16 +9,15 @@ import type {
   BankStatementSummary,
   Check,
   Company,
-  OCR,
   Period,
-  StoredFile,
-  StructuredData,
   Transaction,
-} from "@/types/tools/bsca";
+} from "@/types/tools/bsca/bank-statement";
+import type { TextShard } from "@/types/ocr";
+import type { StoredFile } from "@/types/misc";
 
 export class BankStatement {
   readonly class = "BankStatement";
-  readonly #ocr: OCR;
+  readonly #textShards: TextShard[][];
   bank?: string;
   company!: Company;
   account!: BankAccount;
@@ -30,15 +29,13 @@ export class BankStatement {
   checks!: Check[];
   file?: StoredFile;
 
-  constructor(tables: string[][][], textStructuredData: StructuredData) {
-    this.#ocr = {
-      tables,
-      textStructuredData,
-    };
+  constructor(textShards: TextShard[][]) {
+    this.#textShards = textShards;
     // Uncomment this below to pass the OCR data to the client. This is not recommended, so use for debugging only.
-    // this.ocr = this.#ocr;
+    // this.textShards = this.#textShards;
 
     // this.fillWithTestData();
+    // TODO: rework all of this to use the new OCR data structure
     this.parse();
 
     // Uncomment this below to test the data. This is not needed for production, so use for debugging only.
@@ -67,55 +64,57 @@ export class BankStatement {
   }
 
   parseBank() {
-    if (bofa.isBank(this.#ocr)) this.bank = "Bank of America - Business";
-    else if (chase.isBank(this.#ocr)) this.bank = "Chase - Business";
-    else if (regions.isBank(this.#ocr)) this.bank = "Regions - Business";
-    else if (surety.isBank(this.#ocr)) this.bank = "Surety Bank - Business";
-    else if (wellsfargo.isBank(this.#ocr)) this.bank = "Wells Fargo - Business";
+    if (bofa.isBank(this.#textShards)) this.bank = "Bank of America - Business";
+    else if (chase.isBank(this.#textShards)) this.bank = "Chase - Business";
+    else if (regions.isBank(this.#textShards)) this.bank = "Regions - Business";
+    else if (surety.isBank(this.#textShards))
+      this.bank = "Surety Bank - Business";
+    else if (wellsfargo.isBank(this.#textShards))
+      this.bank = "Wells Fargo - Business";
 
     return this.bank !== undefined;
   }
 
   parseCompany() {
     if (this.bank === "Bank of America - Business")
-      this.company = bofa.parseCompany(this.#ocr);
+      this.company = bofa.parseCompany(this.#textShards);
     if (this.bank === "Regions - Business")
-      this.company = regions.parseCompany(this.#ocr);
+      this.company = regions.parseCompany(this.#textShards);
   }
 
   parseAccount() {
     if (this.bank === "Bank of America - Business")
-      this.account = bofa.parseAccount(this.#ocr);
+      this.account = bofa.parseAccount(this.#textShards);
     else if (this.bank === "Regions - Business")
-      this.account = regions.parseAccount(this.#ocr);
+      this.account = regions.parseAccount(this.#textShards);
   }
 
   parseSummary() {
     if (this.bank === "Bank of America - Business")
-      this.summary = bofa.parseSummary(this.#ocr);
+      this.summary = bofa.parseSummary(this.#textShards);
     else if (this.bank === "Regions - Business")
-      this.summary = regions.parseSummary(this.#ocr);
+      this.summary = regions.parseSummary(this.#textShards);
   }
 
   parsePeriod() {
     if (this.bank === "Bank of America - Business")
-      this.period = bofa.parsePeriod(this.#ocr);
+      this.period = bofa.parsePeriod(this.#textShards);
     else if (this.bank === "Regions - Business")
-      this.period = regions.parsePeriod(this.#ocr);
+      this.period = regions.parsePeriod(this.#textShards);
   }
 
   parseDeposits() {
     if (this.bank === "Bank of America - Business")
-      this.deposits = bofa.parseDeposits(this.#ocr);
+      this.deposits = bofa.parseDeposits(this.#textShards);
     else if (this.bank === "Regions - Business")
-      this.deposits = regions.parseDeposits(this.#ocr);
+      this.deposits = regions.parseDeposits(this.#textShards);
   }
 
   parseWithdrawals() {
     if (this.bank === "Bank of America - Business")
-      this.withdrawals = bofa.parseWithdrawals(this.#ocr);
+      this.withdrawals = bofa.parseWithdrawals(this.#textShards);
     else if (this.bank === "Regions - Business")
-      this.withdrawals = regions.parseWithdrawals(this.#ocr);
+      this.withdrawals = regions.parseWithdrawals(this.#textShards);
   }
 
   // For testing purposes...

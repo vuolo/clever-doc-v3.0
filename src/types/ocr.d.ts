@@ -1,3 +1,11 @@
+export type TextShardGroup = {
+  textShards: TextShard[];
+  boundingPoly: {
+    vertices: BoundingPolyCoordinates;
+    normalizedVertices: BoundingPolyCoordinates;
+  };
+};
+
 export type TextShard = {
   text: string;
   page: number;

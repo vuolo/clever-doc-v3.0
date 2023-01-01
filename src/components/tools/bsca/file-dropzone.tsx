@@ -159,6 +159,8 @@ export default function FileDropzone({ codeTransactions }: Props): JSX.Element {
         return;
       }
 
+      console.log(extractedStructure);
+
       // Updated stored file
       setStoredFiles((prev) => [
         ...new Map([...prev, newStoredFile].map((f) => [f.hash, f])).values(),
