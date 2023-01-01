@@ -149,6 +149,9 @@ export function parseAccounts(
         ) {
           const lineText = textShard.text.replace(NEWLINES_REGEX, "") ?? "";
           console.log(lineText);
+          // format can be [ '2163', 'BANK ATLANTIC- LOC', '0.00' ] or [ '2163 BANK ATLANTIC- LOC', '0.00' ] for example...
+          // make sure to combine all the contents of the array except the last one for the account number and name
+          // and use the last one for the beginning balances
           console.log(
             textShardGroup.textShards.map((t) =>
               t.text.replace(NEWLINES_REGEX, "")
