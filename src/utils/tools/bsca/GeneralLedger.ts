@@ -48,11 +48,11 @@ export class GeneralLedger {
       }
       if (totalEntries !== this.distributionCount) {
         console.log(
-          `The total number of entries (${totalEntries}) does not match the distribution count (${this.distributionCount}).`
+          `[${this.company.name} - (from ${this.period.start} to ${this.period.end})] The total number of entries (${totalEntries}) does not match the distribution count (${this.distributionCount}).`
         );
       } else {
         console.log(
-          `The total number of entries matches the distribution count (${this.distributionCount})!`
+          `[${this.company.name} - (from ${this.period.start} to ${this.period.end})] The total number of entries matches the distribution count (${this.distributionCount})!`
         );
       }
     }
