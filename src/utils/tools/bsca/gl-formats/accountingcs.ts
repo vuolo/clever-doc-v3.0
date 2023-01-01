@@ -321,6 +321,7 @@ function addAccount(
     name,
     number,
     entries,
+    beginningBalance,
   });
   return accounts;
 }
