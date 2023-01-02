@@ -1,3 +1,5 @@
+import moment from "moment";
+
 import * as bofa from "./banks/bofa";
 import * as chase from "./banks/chase";
 import * as regions from "./banks/regions";
@@ -97,64 +99,79 @@ export class BankStatement {
   parseSummary() {
     if (this.bank === "Bank of America - Business")
       this.summary = bofa.parseSummary(this.#textShardGroups);
-    // else if (this.bank === "Regions - Business")
-    //   this.summary = regions.parseSummary(this.#textShardGroups);
+    else if (this.bank === "Regions - Business")
+      this.summary = regions.parseSummary(this.#textShardGroups);
   }
 
   parseDeposits() {
     if (this.bank === "Bank of America - Business")
       this.deposits = bofa.parseDeposits(this.#textShardGroups);
-    // else if (this.bank === "Regions - Business")
-    //   this.deposits = regions.parseDeposits(this.#textShardGroups);
+    else if (this.bank === "Regions - Business")
+      this.deposits = regions.parseDeposits(
+        this.#textShardGroups,
+        // Get the statement's year (for transaction dates)
+        moment(this.period.start, "MM/DD/YYYY").format("YYYY")
+      );
   }
 
   parseWithdrawals() {
     if (this.bank === "Bank of America - Business")
       this.withdrawals = bofa.parseWithdrawals(this.#textShardGroups);
-    // else if (this.bank === "Regions - Business")
-    //   this.withdrawals = regions.parseWithdrawals(this.#textShardGroups);
+    else if (this.bank === "Regions - Business")
+      this.withdrawals = regions.parseWithdrawals(
+        this.#textShardGroups,
+        // Get the statement's year (for transaction dates)
+        moment(this.period.start, "MM/DD/YYYY").format("YYYY")
+      );
   }
 
   // Check if the total number of deposits and withdrawals match reconcile with the summary's totals
   reconcileTransactions() {
     if (this.deposits && this.summary.totals.deposits)
       if (!this.doDepositsMatchTotal()) {
+        const accuracy =
+          (this.getTotalDeposits() / this.summary.totals.deposits) * 100;
         console.error(
-          `✓ [${this.company.name} (${this.bank}) - (from ${
+          `x [${this.company.name} (${this.bank}) - (from ${
             this.period.start
           } to ${this.period.end})] Deposits are inaccurate. Summary Total: $${
             this.summary.totals.deposits
-          } Calculated Total: $${this.summary.totals.deposits} • Instances: ${
+          } • Calculated Total: $${this.getTotalDeposits()} • Instances: ${
             this.deposits.length
-          } • ${(
-            (this.getTotalDeposits() / this.summary.totals.deposits) *
-            100
-          ).toFixed(2)}% accuracy!`
+          } • ${(accuracy > 100 ? 100 - (accuracy - 100) : accuracy).toFixed(
+            2
+          )}% accuracy!`
         );
       } else {
         console.log(
-          `✓ [${this.company.name} (${this.bank}) - (from ${this.period.start} to ${this.period.end})] Deposits are accurate. Summary Total: $${this.summary.totals.deposits} Calculated Total: $${this.summary.totals.deposits} • Instances: ${this.deposits.length} • 100.00% accuracy!`
+          `✓ [${this.company.name} (${this.bank}) - (from ${this.period.start} to ${this.period.end})] Deposits are accurate. Summary Total: $${this.summary.totals.deposits} • Calculated Total: $${this.summary.totals.deposits} • Instances: ${this.deposits.length} • 100.00% accuracy!`
         );
       }
     if (this.withdrawals && this.summary.totals.withdrawals)
       if (!this.doWithdrawalsMatchTotal()) {
+        const accuracy =
+          (this.getTotalWithdrawals() / this.summary.totals.withdrawals) * 100;
         console.error(
-          `✓ [${this.company.name} (${this.bank}) - (from ${
+          `x [${this.company.name} (${this.bank}) - (from ${
             this.period.start
           } to ${
             this.period.end
           })] Withdrawals are inaccurate. Summary Total: $${
             this.summary.totals.withdrawals
-          } Calculated Total: $${
-            this.summary.totals.withdrawals
-          } • Instances: ${this.withdrawals.length} • ${(
-            (this.getTotalWithdrawals() / this.summary.totals.withdrawals) *
-            100
+          } • Calculated Total: $${this.getTotalWithdrawals()} • Fees (from summary): ${
+            this.summary.totals.fees
+          } • Difference: ${(
+            Math.abs(this.summary.totals.withdrawals) -
+            Math.abs(this.getTotalWithdrawals())
+          ).toFixed(2)} • Instances: ${this.withdrawals.length} • ${(accuracy >
+          100
+            ? 100 - (accuracy - 100)
+            : accuracy
           ).toFixed(2)}% accuracy!`
         );
       } else {
         console.log(
-          `✓ [${this.company.name} (${this.bank}) - (from ${this.period.start} to ${this.period.end})] Withdrawals are accurate. Summary Total: $${this.summary.totals.withdrawals} Calculated Total: $${this.summary.totals.withdrawals} • Instances: ${this.withdrawals.length} • 100.00% accuracy!`
+          `✓ [${this.company.name} (${this.bank}) - (from ${this.period.start} to ${this.period.end})] Withdrawals are accurate. Summary Total: $${this.summary.totals.withdrawals} • Calculated Total: $${this.summary.totals.withdrawals} • Instances: ${this.withdrawals.length} • 100.00% accuracy!`
         );
       }
   }

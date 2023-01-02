@@ -155,12 +155,30 @@ export function getTextShardsAsLines(
     line.boundingPoly = getCombinedBoundingPoly(line);
   });
 
+  // Remove all duplicate lines, meaining the another line's textShards match the any of the current line's textShards indices.
+  // This is a hacky way to remove duplicate lines at the end of pages, which happens somewhere in the above lines creation process.
+  const uniqueLines = [] as TextShardGroup[];
+  lines.forEach((line) => {
+    const duplicateLine = uniqueLines.find((uniqueLine) =>
+      uniqueLine.textShards.some((textShard) =>
+        line.textShards.some(
+          (lineTextShard) =>
+            lineTextShard.indices.start === textShard.indices.start &&
+            lineTextShard.indices.end === textShard.indices.end
+        )
+      )
+    );
+    if (!duplicateLine) {
+      uniqueLines.push(line);
+    }
+  });
+
   // If separateByPage is true, then separate the lines by page
   if (separateByPage) {
     const linesByPage = [] as TextShardGroup[][];
     let currentPage = 0;
     let currentLines = [] as TextShardGroup[];
-    lines.forEach((line) => {
+    uniqueLines.forEach((line) => {
       if (line.page !== currentPage) {
         linesByPage.push(currentLines);
         currentLines = [];
@@ -172,7 +190,7 @@ export function getTextShardsAsLines(
     return linesByPage;
   }
 
-  return lines;
+  return uniqueLines;
 }
 
 function getCombinedBoundingPoly(
