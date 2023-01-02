@@ -73,7 +73,6 @@ export class GeneralLedger {
   }
 
   // Check if the total number of entries in the account reconcile with the distribution count
-  // TODO: look at MUNANOOR GL.pdf and ROYAL BEAUTY INC GL.pdf to see why they don't reconcile...
   reconcileEntries() {
     if (this.distributionCount) {
       let totalEntries = 0;
@@ -83,7 +82,13 @@ export class GeneralLedger {
 
       if (totalEntries !== this.distributionCount) {
         console.log(
-          `x [${this.company.name} - (from ${this.period.start} to ${this.period.end})] The total number of entries (${totalEntries}) does not match the distribution count (${this.distributionCount}).`
+          `x [${this.company.name} - (from ${this.period.start} to ${
+            this.period.end
+          })] The total number of entries (${totalEntries}) does not match the distribution count (${
+            this.distributionCount
+          }) • ${((totalEntries / this.distributionCount) * 100).toFixed(
+            2
+          )}% accuracy.`
         );
 
         // Look for accounts where the amountTotal does not match the amount of each entry in that account
@@ -103,7 +108,7 @@ export class GeneralLedger {
         }
       } else {
         console.log(
-          `✓ [${this.company.name} - (from ${this.period.start} to ${this.period.end})] The total number of entries matches the distribution count (${this.distributionCount})!`
+          `✓ [${this.company.name} - (from ${this.period.start} to ${this.period.end})] The total number of entries matches the distribution count (${this.distributionCount}) • 100% accuracy!`
         );
       }
     }
