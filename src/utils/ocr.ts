@@ -4,14 +4,18 @@ import type {
   TextShardGroup,
 } from "@/types/ocr";
 
-const NEWLINES_REGEX = /\r?\n|\r/g;
+export const NEWLINES_REGEX = /\r?\n|\r/g;
+
+export function strip(text?: string): string {
+  return text ? text.replace(NEWLINES_REGEX, "").trim() : "";
+}
 
 export function getGroupedShardTexts(
   textShardGroup: TextShardGroup,
   removeNewlines = true
 ): string[] {
   return textShardGroup.textShards.map((t) =>
-    removeNewlines ? t.text.replace(NEWLINES_REGEX, "") : t.text
+    removeNewlines ? strip(t.text) : t.text
   );
 }
 

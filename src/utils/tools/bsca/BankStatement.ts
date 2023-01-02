@@ -58,12 +58,12 @@ export class BankStatement {
 
   parse() {
     if (!this.parseBank()) return;
-    // this.parseCompany();
-    // this.parseAccount();
-    // this.parseSummary();
-    // this.parsePeriod();
-    // this.parseDeposits();
-    // this.parseWithdrawals();
+    this.parseCompany();
+    this.parseAccount();
+    this.parsePeriod();
+    this.parseSummary();
+    this.parseDeposits();
+    this.parseWithdrawals();
     // this.parseFees();
     // this.parseChecks();
   }
@@ -97,18 +97,18 @@ export class BankStatement {
       this.account = regions.parseAccount(this.#textShardGroups);
   }
 
-  parseSummary() {
-    if (this.bank === "Bank of America - Business")
-      this.summary = bofa.parseSummary(this.#textShardGroups);
-    else if (this.bank === "Regions - Business")
-      this.summary = regions.parseSummary(this.#textShardGroups);
-  }
-
   parsePeriod() {
     if (this.bank === "Bank of America - Business")
       this.period = bofa.parsePeriod(this.#textShardGroups);
     else if (this.bank === "Regions - Business")
       this.period = regions.parsePeriod(this.#textShardGroups);
+  }
+
+  parseSummary() {
+    if (this.bank === "Bank of America - Business")
+      this.summary = bofa.parseSummary(this.#textShardGroups);
+    else if (this.bank === "Regions - Business")
+      this.summary = regions.parseSummary(this.#textShardGroups);
   }
 
   parseDeposits() {

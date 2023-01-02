@@ -12,13 +12,13 @@ import {
   getTextShardGroupsWithinRange,
   getTextShardWithinRange,
   isBoundingPolyWithinRange,
+  strip,
 } from "@/utils/ocr";
 
 const DISTRIBUTION_COUNT_REGEX = /Distribution count = (\d+)/;
 const TOTALS_REGEX = /Totals for (\S+)/;
 const DATE_REGEX = /^\d{2}\/\d{2}\/\d{2}/;
 const PERIOD_REGEX = /(\w+ \d{1,2}, \d{4}) ?- ?(\w+ \d{1,2}, \d{4})/;
-const NEWLINES_REGEX = /\r?\n|\r/g;
 const PARENTHESIS_REGEX = /^\((.+)\)$/;
 
 export function isGLFormat(textShardGroups: TextShardGroup[][]): boolean {
@@ -42,10 +42,7 @@ export function isGLFormat(textShardGroups: TextShardGroup[][]): boolean {
         0.07
       )
     ) {
-      const shardText =
-        textShardGroup[1].textShards[0]?.text
-          .replace(NEWLINES_REGEX, "")
-          .trim() ?? "";
+      const shardText = strip(textShardGroup[1].textShards[0]?.text);
 
       if (shardText == "General Ledger") return true;
     }
@@ -66,10 +63,7 @@ export function parseCompany(textShardGroups: TextShardGroup[][]): Company {
         0.045
       )
     ) {
-      const shardText =
-        textShardGroup[0].textShards[0]?.text
-          .replace(NEWLINES_REGEX, "")
-          .trim() ?? "";
+      const shardText = strip(textShardGroup[0].textShards[0]?.text);
 
       return {
         name: shardText,
@@ -78,7 +72,7 @@ export function parseCompany(textShardGroups: TextShardGroup[][]): Company {
   }
 
   return {
-    name: "Unknown Company",
+    name: "Unknown",
   };
 }
 
@@ -100,10 +94,7 @@ export function parsePeriod(textShardGroups: TextShardGroup[][]): Period {
         0.073
       )
     ) {
-      const shardText =
-        textShardGroup[2].textShards[0]?.text
-          .replace(NEWLINES_REGEX, "")
-          .trim() ?? "";
+      const shardText = strip(textShardGroup[2].textShards[0]?.text);
 
       const match = PERIOD_REGEX.exec(shardText);
       if (match) {
@@ -161,7 +152,7 @@ export function parseAccounts(
             0.75
           )
         ) {
-          const shardText = textShard.text.replace(NEWLINES_REGEX, "").trim();
+          const shardText = strip(textShard.text);
           const lineText = getGroupedShardTexts(textShardGroup);
 
           // Format can be [ '2163', 'BANK ATLANTIC- LOC', '0.00' ] or [ '2163 BANK ATLANTIC- LOC', '0.00' ] for example...
@@ -201,7 +192,7 @@ export function parseAccounts(
             0.11
           )
         ) {
-          const shardText = textShard.text.replace(NEWLINES_REGEX, "").trim();
+          const shardText = strip(textShard.text);
 
           const dateMatch = shardText.match(DATE_REGEX);
           if (dateMatch && dateMatch.index !== undefined) {
@@ -235,12 +226,12 @@ export function parseAccounts(
 
             const entry = {
               date: dateFormatted,
-              description: description?.text.replace(NEWLINES_REGEX, "").trim(),
+              description: strip(description?.text),
               reference:
                 (reference?.text.split(" ") ?? []).length == 1
-                  ? reference?.text.replace(NEWLINES_REGEX, "").trim()
+                  ? strip(reference?.text)
                   : undefined,
-              journal: journal?.text.replace(NEWLINES_REGEX, "").trim(),
+              journal: strip(journal?.text),
               amount: getAmount(amount?.text),
             };
             curEntries.push(entry);
@@ -256,7 +247,7 @@ export function parseAccounts(
             0.63
           )
         ) {
-          const shardText = textShard.text.replace(NEWLINES_REGEX, "").trim();
+          const shardText = strip(textShard.text);
 
           const totalsMatch = TOTALS_REGEX.exec(shardText);
           if (totalsMatch && totalsMatch[1]) {
@@ -315,7 +306,7 @@ export function parseDistributionCount(
           0.22
         )
       ) {
-        const shardText = textShard.text.replace(NEWLINES_REGEX, "").trim();
+        const shardText = strip(textShard.text);
 
         if (shardText.includes("Distribution count")) {
           const lineText = getGroupedShardTexts(textShardGroup);
@@ -335,11 +326,7 @@ export function parseDistributionCount(
 function getAmount(text?: string): number | undefined {
   return text
     ? parseFloat(
-        text
-          .replace(NEWLINES_REGEX, "")
-          .trim()
-          .replace(/,/g, "")
-          .replace(PARENTHESIS_REGEX, "$1")
+        strip(text).replace(/,/g, "").replace(PARENTHESIS_REGEX, "$1")
       ) * (text.includes("(") ? -1 : 1)
     : undefined;
 }
