@@ -1,8 +1,29 @@
-import type { Company, OCR } from "@/types/tools/bsca";
+import moment from "moment";
 
-export function isBank({ textStructuredData }: OCR): boolean {
-  for (const element of textStructuredData.elements)
-    if (element.Page > 0) break;
-    else if (element.Text?.includes("Chase.com")) return true;
+import type {
+  BankAccount,
+  BankStatementSummary,
+  Company,
+  Period,
+  Transaction,
+} from "@/types/tools/bsca/bank-statement";
+import type { TextShardGroup } from "@/types/ocr";
+import {
+  getGroupedShardTexts,
+  getTextShardGroupsWithinRange,
+  getTextShardWithinRange,
+  isBoundingPolyWithinRange,
+} from "@/utils/ocr";
+
+export function isBank(textShardGroups: TextShardGroup[][]): boolean {
+  const firstPage = textShardGroups[0];
+  if (!firstPage) return false;
+
+  for (const textShardGroup of firstPage) {
+    const lineText = getGroupedShardTexts(textShardGroup);
+    for (const text of lineText) {
+      if (text.includes("Chase.com")) return true;
+    }
+  }
   return false;
 }

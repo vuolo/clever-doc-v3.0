@@ -12,12 +12,14 @@ import type {
   Period,
   Transaction,
 } from "@/types/tools/bsca/bank-statement";
-import type { TextShard } from "@/types/ocr";
+import type { TextShard, TextShardGroup } from "@/types/ocr";
 import type { StoredFile } from "@/types/misc";
+import { getTextShardsAsLines } from "@/utils/ocr";
 
 export class BankStatement {
   readonly class = "BankStatement";
   readonly #textShards: TextShard[][];
+  readonly #textShardGroups: TextShardGroup[][];
   bank?: string;
   company!: Company;
   account!: BankAccount;
@@ -31,45 +33,51 @@ export class BankStatement {
 
   constructor(textShards: TextShard[][]) {
     this.#textShards = textShards;
+    this.#textShardGroups = getTextShardsAsLines(
+      textShards
+    ) as TextShardGroup[][];
     // Uncomment this below to pass the OCR data to the client. This is not recommended, so use for debugging only.
     // this.textShards = this.#textShards;
+    this.textShardGroups = this.#textShardGroups;
 
     // this.fillWithTestData();
-    // TODO: rework all of this to use the new OCR data structure
     this.parse();
 
     // Uncomment this below to test the data. This is not needed for production, so use for debugging only.
-    // if (this.deposits) {
-    //   console.log(this.doDepositsMatchTotal());
-    //   console.log(this.getTotalDeposits());
-    //   console.log(this.summary.totals.deposits);
-    // }
-    // if (this.withdrawals) {
-    //   console.log(this.doWithdrawalsMatchTotal());
-    //   console.log(this.getTotalWithdrawals());
-    //   console.log(this.summary.totals.withdrawals);
-    // }
+    if (this.deposits) {
+      console.log(this.doDepositsMatchTotal());
+      console.log(this.getTotalDeposits());
+      console.log(this.summary.totals.deposits);
+    }
+    if (this.withdrawals) {
+      console.log(this.doWithdrawalsMatchTotal());
+      console.log(this.getTotalWithdrawals());
+      console.log(this.summary.totals.withdrawals);
+    }
   }
 
   parse() {
     if (!this.parseBank()) return;
-    this.parseCompany();
-    this.parseAccount();
-    this.parseSummary();
-    this.parsePeriod();
-    this.parseDeposits();
-    this.parseWithdrawals();
+    // this.parseCompany();
+    // this.parseAccount();
+    // this.parseSummary();
+    // this.parsePeriod();
+    // this.parseDeposits();
+    // this.parseWithdrawals();
     // this.parseFees();
     // this.parseChecks();
   }
 
   parseBank() {
-    if (bofa.isBank(this.#textShards)) this.bank = "Bank of America - Business";
-    else if (chase.isBank(this.#textShards)) this.bank = "Chase - Business";
-    else if (regions.isBank(this.#textShards)) this.bank = "Regions - Business";
-    else if (surety.isBank(this.#textShards))
+    if (bofa.isBank(this.#textShardGroups))
+      this.bank = "Bank of America - Business";
+    else if (chase.isBank(this.#textShardGroups))
+      this.bank = "Chase - Business";
+    else if (regions.isBank(this.#textShardGroups))
+      this.bank = "Regions - Business";
+    else if (surety.isBank(this.#textShardGroups))
       this.bank = "Surety Bank - Business";
-    else if (wellsfargo.isBank(this.#textShards))
+    else if (wellsfargo.isBank(this.#textShardGroups))
       this.bank = "Wells Fargo - Business";
 
     return this.bank !== undefined;
@@ -77,44 +85,44 @@ export class BankStatement {
 
   parseCompany() {
     if (this.bank === "Bank of America - Business")
-      this.company = bofa.parseCompany(this.#textShards);
+      this.company = bofa.parseCompany(this.#textShardGroups);
     if (this.bank === "Regions - Business")
-      this.company = regions.parseCompany(this.#textShards);
+      this.company = regions.parseCompany(this.#textShardGroups);
   }
 
   parseAccount() {
     if (this.bank === "Bank of America - Business")
-      this.account = bofa.parseAccount(this.#textShards);
+      this.account = bofa.parseAccount(this.#textShardGroups);
     else if (this.bank === "Regions - Business")
-      this.account = regions.parseAccount(this.#textShards);
+      this.account = regions.parseAccount(this.#textShardGroups);
   }
 
   parseSummary() {
     if (this.bank === "Bank of America - Business")
-      this.summary = bofa.parseSummary(this.#textShards);
+      this.summary = bofa.parseSummary(this.#textShardGroups);
     else if (this.bank === "Regions - Business")
-      this.summary = regions.parseSummary(this.#textShards);
+      this.summary = regions.parseSummary(this.#textShardGroups);
   }
 
   parsePeriod() {
     if (this.bank === "Bank of America - Business")
-      this.period = bofa.parsePeriod(this.#textShards);
+      this.period = bofa.parsePeriod(this.#textShardGroups);
     else if (this.bank === "Regions - Business")
-      this.period = regions.parsePeriod(this.#textShards);
+      this.period = regions.parsePeriod(this.#textShardGroups);
   }
 
   parseDeposits() {
     if (this.bank === "Bank of America - Business")
-      this.deposits = bofa.parseDeposits(this.#textShards);
+      this.deposits = bofa.parseDeposits(this.#textShardGroups);
     else if (this.bank === "Regions - Business")
-      this.deposits = regions.parseDeposits(this.#textShards);
+      this.deposits = regions.parseDeposits(this.#textShardGroups);
   }
 
   parseWithdrawals() {
     if (this.bank === "Bank of America - Business")
-      this.withdrawals = bofa.parseWithdrawals(this.#textShards);
+      this.withdrawals = bofa.parseWithdrawals(this.#textShardGroups);
     else if (this.bank === "Regions - Business")
-      this.withdrawals = regions.parseWithdrawals(this.#textShards);
+      this.withdrawals = regions.parseWithdrawals(this.#textShardGroups);
   }
 
   // For testing purposes...

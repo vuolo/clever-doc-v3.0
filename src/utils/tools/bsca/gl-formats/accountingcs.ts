@@ -6,8 +6,9 @@ import type {
   GeneralLedgerEntry,
   Period,
 } from "@/types/tools/bsca/general-ledger";
-import type { TextShard, TextShardGroup } from "@/types/ocr";
+import type { TextShardGroup } from "@/types/ocr";
 import {
+  getGroupedShardTexts,
   getTextShardGroupsWithinRange,
   getTextShardWithinRange,
   isBoundingPolyWithinRange,
@@ -161,9 +162,7 @@ export function parseAccounts(
           )
         ) {
           const shardText = textShard.text.replace(NEWLINES_REGEX, "").trim();
-          const lineText = textShardGroup.textShards.map((t) =>
-            t.text.replace(NEWLINES_REGEX, "")
-          );
+          const lineText = getGroupedShardTexts(textShardGroup);
 
           // Format can be [ '2163', 'BANK ATLANTIC- LOC', '0.00' ] or [ '2163 BANK ATLANTIC- LOC', '0.00' ] for example...
           // Make sure to combine all the contents of the array except the last one for the account number and name
@@ -263,9 +262,7 @@ export function parseAccounts(
           if (totalsMatch && totalsMatch[1]) {
             const accountNumber = totalsMatch[1];
 
-            const lineText = textShardGroup.textShards.map((t) =>
-              t.text.replace(NEWLINES_REGEX, "")
-            );
+            const lineText = getGroupedShardTexts(textShardGroup);
             const endingBalance = lineText[lineText.length - 1];
             const amountTotal = lineText[lineText.length - 2];
 
@@ -321,9 +318,7 @@ export function parseDistributionCount(
         const shardText = textShard.text.replace(NEWLINES_REGEX, "").trim();
 
         if (shardText.includes("Distribution count")) {
-          const lineText = textShardGroup.textShards.map((t) =>
-            t.text.replace(NEWLINES_REGEX, "")
-          );
+          const lineText = getGroupedShardTexts(textShardGroup);
           const joinedLineText = lineText.join(" ").replace(/,/g, "");
 
           const distributionCountMatch = joinedLineText.match(

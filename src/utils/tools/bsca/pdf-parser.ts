@@ -1,3 +1,6 @@
+import fs from "fs";
+import os from "os";
+import { decrypt } from "node-qpdf2";
 import { PDFDocument } from "pdf-lib";
 import {
   DocumentProcessorServiceClient,
@@ -111,12 +114,11 @@ function parseTextShards(
   textShards: TextShard[][]
 ): BankStatement | GeneralLedger | undefined {
   // Check whether the document is a bank statement or general ledger
-  // const bankStatement = new BankStatement(textShards);
-  // if (bankStatement.bank) return bankStatement;
+  const bankStatement = new BankStatement(textShards);
+  if (bankStatement.bank) return bankStatement;
 
   const generalLedger = new GeneralLedger(textShards);
-  // if (generalLedger.company) return generalLedger;
-  return generalLedger;
+  if (generalLedger.company) return generalLedger;
 }
 
 // Sort the text shards into their visual order
@@ -203,7 +205,16 @@ async function splitBase64PDF(fileContents: string): Promise<string[]> {
   const pdfBytes = Buffer.from(fileContents, "base64");
 
   // Load the PDF document
-  const pdfDoc = await PDFDocument.load(pdfBytes);
+  let pdfDoc = await PDFDocument.load(pdfBytes, {
+    ignoreEncryption: true,
+  });
+
+  // Remove encryption if it exists
+  if (pdfDoc.isEncrypted) {
+    const decryptedPdfBytes = await decryptPdfBytes(pdfBytes);
+    console.log("decryptedPdfBytes", decryptedPdfBytes);
+    pdfDoc = await PDFDocument.load(decryptedPdfBytes);
+  }
 
   // Get the total number of pages in the PDF
   const numPages = pdfDoc.getPageCount();
@@ -243,4 +254,39 @@ async function splitBase64PDF(fileContents: string): Promise<string[]> {
   for (const doc of splitPDFDocs)
     base64SplitPDFDocs.push(await doc.saveAsBase64());
   return base64SplitPDFDocs;
+}
+
+// function decryptPdfBytes(input: Buffer): Buffer {
+//   // Save the input buffer to a temporary file and decrypt it using node-qpdf2, store the decrypted file's contents buffer, and delete the temporary file, then return the decrypted file's contents buffer
+//   // Create a temporary file to store the input buffer
+// }
+
+async function decryptPdfBytes(input: Buffer): Promise<Buffer> {
+  // Get the path to the operating system's temporary directory
+  const tempDir = os.tmpdir();
+
+  // Create the full path to the temporary input file
+  const tempInputFile = `${tempDir}/encrypted-input.pdf`;
+
+  // Write the input pdf buffer to the temporary input file
+  fs.writeFileSync(tempInputFile, input);
+
+  // Create the full path to the temporary output file
+  const tempOutputFile = `${tempDir}/decrypted-output.pdf`;
+
+  // Decrypt the pdf file and store the result in the temporary output file
+  await decrypt({
+    input: tempInputFile,
+    output: tempOutputFile,
+  });
+
+  // Read the contents of the decrypted file into a buffer
+  const decryptedContents = fs.readFileSync(tempOutputFile);
+
+  // Delete the temporary files
+  fs.unlinkSync(tempInputFile);
+  fs.unlinkSync(tempOutputFile);
+
+  // Return the decrypted file's contents buffer
+  return decryptedContents;
 }
