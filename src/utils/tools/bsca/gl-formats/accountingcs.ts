@@ -168,10 +168,7 @@ export function parseAccounts(
           // Format can be [ '2163', 'BANK ATLANTIC- LOC', '0.00' ] or [ '2163 BANK ATLANTIC- LOC', '0.00' ] for example...
           // Make sure to combine all the contents of the array except the last one for the account number and name
           // and use the last one for the beginning balances
-          const beginningBalance =
-            parseFloat(
-              shardText.replace(/,/g, "").replace(PARENTHESIS_REGEX, "$1")
-            ) * (shardText.includes("(") ? -1 : 1);
+          const beginningBalance = getAmount(shardText);
 
           // Combine all the text shards except the last one
           const accountNumberAndName = lineText
@@ -245,15 +242,7 @@ export function parseAccounts(
                   ? reference?.text.replace(NEWLINES_REGEX, "").trim()
                   : undefined,
               journal: journal?.text.replace(NEWLINES_REGEX, "").trim(),
-              amount: amount
-                ? parseFloat(
-                    amount.text
-                      .replace(NEWLINES_REGEX, "")
-                      .trim()
-                      .replace(/,/g, "")
-                      .replace(PARENTHESIS_REGEX, "$1")
-                  ) * (amount.text.includes("(") ? -1 : 1)
-                : undefined,
+              amount: getAmount(amount?.text),
             };
             curEntries.push(entry);
           }
@@ -274,10 +263,18 @@ export function parseAccounts(
           if (totalsMatch && totalsMatch[1]) {
             const accountNumber = totalsMatch[1];
 
+            const lineText = textShardGroup.textShards.map((t) =>
+              t.text.replace(NEWLINES_REGEX, "")
+            );
+            const endingBalance = lineText[lineText.length - 1];
+            const amountTotal = lineText[lineText.length - 2];
+
             // Only push entries if the totals' account number matches the current account number (meaning the entries we have been collecting are accurate and for this account)
             const account = accounts.find((a) => a.number == accountNumber);
             if (account?.number == curAccountNumber) {
               account.entries.push(...curEntries);
+              account.endingBalance = getAmount(endingBalance);
+              account.amountTotal = getAmount(amountTotal);
               curAccountNumber = "";
             } else {
               const account = accounts.find(
@@ -338,6 +335,18 @@ export function parseDistributionCount(
       }
     }
   }
+}
+
+function getAmount(text?: string): number | undefined {
+  return text
+    ? parseFloat(
+        text
+          .replace(NEWLINES_REGEX, "")
+          .trim()
+          .replace(/,/g, "")
+          .replace(PARENTHESIS_REGEX, "$1")
+      ) * (text.includes("(") ? -1 : 1)
+    : undefined;
 }
 
 function doesAccountNumberExistInAccounts(

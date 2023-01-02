@@ -80,13 +80,30 @@ export class GeneralLedger {
       for (const account of this.accounts) {
         totalEntries += account.entries.length;
       }
+
       if (totalEntries !== this.distributionCount) {
         console.log(
-          `[${this.company.name} - (from ${this.period.start} to ${this.period.end})] The total number of entries (${totalEntries}) does not match the distribution count (${this.distributionCount}).`
+          `x [${this.company.name} - (from ${this.period.start} to ${this.period.end})] The total number of entries (${totalEntries}) does not match the distribution count (${this.distributionCount}).`
         );
+
+        // Look for accounts where the amountTotal does not match the amount of each entry in that account
+        for (const account of this.accounts) {
+          let accountTotal = 0;
+          for (const entry of account.entries) {
+            accountTotal += entry.amount ?? 0;
+          }
+
+          // Round to 2 decimal places
+          accountTotal = parseFloat(accountTotal.toFixed(2));
+          if (account.amountTotal !== accountTotal) {
+            console.log(
+              `... [${this.company.name} - (from ${this.period.start} to ${this.period.end})] The total amount (${accountTotal}) for the account ${account.number} ${account.name} does not match the amountTotal (${account.amountTotal}).`
+            );
+          }
+        }
       } else {
         console.log(
-          `[${this.company.name} - (from ${this.period.start} to ${this.period.end})] The total number of entries matches the distribution count (${this.distributionCount})!`
+          `✓ [${this.company.name} - (from ${this.period.start} to ${this.period.end})] The total number of entries matches the distribution count (${this.distributionCount})!`
         );
       }
     }
