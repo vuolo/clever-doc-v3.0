@@ -43,17 +43,7 @@ export class BankStatement {
     // this.fillWithTestData();
     this.parse();
 
-    // Uncomment this below to test the data. This is not needed for production, so use for debugging only.
-    if (this.deposits) {
-      console.log(this.doDepositsMatchTotal());
-      console.log(this.getTotalDeposits());
-      console.log(this.summary.totals.deposits);
-    }
-    if (this.withdrawals) {
-      console.log(this.doWithdrawalsMatchTotal());
-      console.log(this.getTotalWithdrawals());
-      console.log(this.summary.totals.withdrawals);
-    }
+    this.reconcileTransactions();
   }
 
   parse() {
@@ -125,7 +115,50 @@ export class BankStatement {
       this.withdrawals = regions.parseWithdrawals(this.#textShardGroups);
   }
 
-  // For testing purposes...
+  // Check if the total number of deposits and withdrawals match reconcile with the summary's totals
+  reconcileTransactions() {
+    if (this.deposits && this.summary.totals.deposits)
+      if (!this.doDepositsMatchTotal()) {
+        console.error(
+          `✓ [${this.company.name} (${this.bank}) - (from ${
+            this.period.start
+          } to ${this.period.end})] Deposits are inaccurate. Summary Total: $${
+            this.summary.totals.deposits
+          } Calculated Total: $${this.summary.totals.deposits} • Instances: ${
+            this.deposits.length
+          } • ${(
+            (this.getTotalDeposits() / this.summary.totals.deposits) *
+            100
+          ).toFixed(2)}% accuracy!`
+        );
+      } else {
+        console.log(
+          `✓ [${this.company.name} (${this.bank}) - (from ${this.period.start} to ${this.period.end})] Deposits are accurate. Summary Total: $${this.summary.totals.deposits} Calculated Total: $${this.summary.totals.deposits} • Instances: ${this.deposits.length} • 100.00% accuracy!`
+        );
+      }
+    if (this.withdrawals && this.summary.totals.withdrawals)
+      if (!this.doWithdrawalsMatchTotal()) {
+        console.error(
+          `✓ [${this.company.name} (${this.bank}) - (from ${
+            this.period.start
+          } to ${
+            this.period.end
+          })] Withdrawals are inaccurate. Summary Total: $${
+            this.summary.totals.withdrawals
+          } Calculated Total: $${
+            this.summary.totals.withdrawals
+          } • Instances: ${this.withdrawals.length} • ${(
+            (this.getTotalWithdrawals() / this.summary.totals.withdrawals) *
+            100
+          ).toFixed(2)}% accuracy!`
+        );
+      } else {
+        console.log(
+          `✓ [${this.company.name} (${this.bank}) - (from ${this.period.start} to ${this.period.end})] Withdrawals are accurate. Summary Total: $${this.summary.totals.withdrawals} Calculated Total: $${this.summary.totals.withdrawals} • Instances: ${this.withdrawals.length} • 100.00% accuracy!`
+        );
+      }
+  }
+
   getTotalDeposits(): number {
     let total = 0;
     for (const deposit of this.deposits) total += deposit.amount;
