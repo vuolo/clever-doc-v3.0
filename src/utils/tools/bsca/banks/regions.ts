@@ -394,6 +394,7 @@ function parseTransactions(
         }
 
         // Description
+        // TODO: possibly include multi-line descriptions
         if (!curTransaction.description.original) {
           const descriptionText = joinedLineText
             .replace(DATE_REGEX, "")

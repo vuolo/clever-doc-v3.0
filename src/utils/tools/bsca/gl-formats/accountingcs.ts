@@ -211,6 +211,7 @@ export function parseAccounts(
               0.23,
               0.29
             );
+            // TODO: possibly include multi-line descriptions
             const description = getTextShardWithinRange(
               textShardGroup.textShards,
               "x",

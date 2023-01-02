@@ -381,6 +381,7 @@ function parseTransactions(
         }
 
         // Description
+        // TODO: possibly include multi-line descriptions
         else if (!curTransaction.description.original) {
           const descriptionText = textShardGroup.textShards[1]?.text;
           if (descriptionText) {
