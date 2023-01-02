@@ -90,8 +90,8 @@ export class BankStatement {
   parsePeriod() {
     if (this.bank === "Bank of America - Business")
       this.period = bofa.parsePeriod(this.#textShardGroups);
-    // else if (this.bank === "Regions - Business")
-    //   this.period = regions.parsePeriod(this.#textShardGroups);
+    else if (this.bank === "Regions - Business")
+      this.period = regions.parsePeriod(this.#textShardGroups);
   }
 
   parseSummary() {

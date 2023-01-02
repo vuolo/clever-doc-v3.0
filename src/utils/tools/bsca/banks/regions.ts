@@ -107,6 +107,60 @@ export function parseAccount(textShardGroups: TextShardGroup[][]): BankAccount {
   return account;
 }
 
+export function parsePeriod(textShardGroups: TextShardGroup[][]): Period {
+  const period = {
+    start: "Unknown",
+    end: "Unknown",
+  } as Period;
+
+  const firstPage = textShardGroups[0];
+  if (!firstPage) return period;
+
+  for (const textShardGroup of firstPage) {
+    for (const textShard of textShardGroup.textShards) {
+      if (
+        isBoundingPolyWithinRange(
+          textShard.boundingPoly.normalizedVertices,
+          "x",
+          0.3,
+          0.7
+        ) &&
+        isBoundingPolyWithinRange(
+          textShard.boundingPoly.normalizedVertices,
+          "y",
+          0.31,
+          0.33
+        )
+      ) {
+        const shardText = strip(textShard.text);
+
+        const match = PERIOD_REGEX.exec(shardText);
+        if (match) {
+          const startDate = match[1];
+          const endDate = match[2];
+
+          if (startDate && endDate) {
+            // Parse and reformat the dates
+            const formattedStartDate = moment(startDate, "MMMM D, YYYY").format(
+              "MM/DD/YYYY"
+            );
+            const formattedEndDate = moment(endDate, "MMMM D, YYYY").format(
+              "MM/DD/YYYY"
+            );
+
+            return {
+              start: formattedStartDate,
+              end: formattedEndDate,
+            };
+          }
+        }
+      }
+    }
+  }
+
+  return period;
+}
+
 function shortenDescription(description: string): string | undefined {
   let shortened = description;
 

@@ -11,6 +11,7 @@ import {
 } from "@tanstack/react-table";
 import {
   FileLock2,
+  FileQuestion,
   FileSpreadsheet,
   FileText,
   Loader2,
@@ -45,7 +46,8 @@ export default function FileTable({
             ) : info.row.original.structure.startsWith("General Ledger") ? (
               <FileSpreadsheet size={20} />
             ) : (
-              <FileText size={20} />
+              // <FileText size={20} />
+              <FileQuestion size={20} />
             )}
             {/* TODO: possibly make this PDF view page show all details it gathered */}
             <Link
