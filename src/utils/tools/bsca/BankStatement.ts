@@ -90,29 +90,29 @@ export class BankStatement {
   parsePeriod() {
     if (this.bank === "Bank of America - Business")
       this.period = bofa.parsePeriod(this.#textShardGroups);
-    else if (this.bank === "Regions - Business")
-      this.period = regions.parsePeriod(this.#textShardGroups);
+    // else if (this.bank === "Regions - Business")
+    //   this.period = regions.parsePeriod(this.#textShardGroups);
   }
 
   parseSummary() {
     if (this.bank === "Bank of America - Business")
       this.summary = bofa.parseSummary(this.#textShardGroups);
-    else if (this.bank === "Regions - Business")
-      this.summary = regions.parseSummary(this.#textShardGroups);
+    // else if (this.bank === "Regions - Business")
+    //   this.summary = regions.parseSummary(this.#textShardGroups);
   }
 
   parseDeposits() {
     if (this.bank === "Bank of America - Business")
       this.deposits = bofa.parseDeposits(this.#textShardGroups);
-    else if (this.bank === "Regions - Business")
-      this.deposits = regions.parseDeposits(this.#textShardGroups);
+    // else if (this.bank === "Regions - Business")
+    //   this.deposits = regions.parseDeposits(this.#textShardGroups);
   }
 
   parseWithdrawals() {
     if (this.bank === "Bank of America - Business")
       this.withdrawals = bofa.parseWithdrawals(this.#textShardGroups);
-    else if (this.bank === "Regions - Business")
-      this.withdrawals = regions.parseWithdrawals(this.#textShardGroups);
+    // else if (this.bank === "Regions - Business")
+    //   this.withdrawals = regions.parseWithdrawals(this.#textShardGroups);
   }
 
   // Check if the total number of deposits and withdrawals match reconcile with the summary's totals
@@ -196,7 +196,7 @@ export class BankStatement {
         end: 2000,
       },
       totals: {
-        deposits: 1000,
+        deposits: 2000,
         withdrawals: 1000,
         fees: 0,
         checks: 0,
@@ -229,4 +229,14 @@ export class BankStatement {
     this.fees = [];
     this.checks = [];
   }
+}
+
+export function emptyTransaction(): Transaction {
+  return {
+    date: "",
+    description: {
+      original: "",
+    },
+    amount: -1,
+  };
 }

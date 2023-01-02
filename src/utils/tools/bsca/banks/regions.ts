@@ -10,10 +10,10 @@ import type {
 import type { TextShardGroup } from "@/types/ocr";
 import {
   getGroupedShardTexts,
-  getTextShardGroupsWithinRange,
-  getTextShardWithinRange,
   isBoundingPolyWithinRange,
+  strip,
 } from "@/utils/ocr";
+import { emptyTransaction } from "../BankStatement";
 
 const PERIOD_REGEX = /(\w+ \d{1,2}, \d{4}) through (\w+ \d{1,2}, \d{4})/;
 
@@ -28,4 +28,92 @@ export function isBank(textShardGroups: TextShardGroup[][]): boolean {
     }
   }
   return false;
+}
+
+export function parseCompany(textShardGroups: TextShardGroup[][]): Company {
+  const company = {
+    name: "Unknown",
+  } as Company;
+
+  const firstPage = textShardGroups[0];
+  if (!firstPage) return company;
+
+  for (const textShardGroup of firstPage) {
+    for (const textShard of textShardGroup.textShards) {
+      if (
+        isBoundingPolyWithinRange(
+          textShard.boundingPoly.normalizedVertices,
+          "x",
+          0.11,
+          0.45
+        ) &&
+        isBoundingPolyWithinRange(
+          textShard.boundingPoly.normalizedVertices,
+          "y",
+          0.14,
+          0.215
+        )
+      ) {
+        const shardText = strip(textShard.text);
+
+        if (company.name === "Unknown") company.name = shardText;
+        else if (!company.address) company.address = shardText;
+        else company.address += `, ${shardText}`;
+      }
+    }
+  }
+
+  return company;
+}
+
+export function parseAccount(textShardGroups: TextShardGroup[][]): BankAccount {
+  const account = {
+    number: "Unknown",
+  } as BankAccount;
+
+  const firstPage = textShardGroups[0];
+  if (!firstPage) return account;
+
+  for (const textShardGroup of firstPage) {
+    for (const textShard of textShardGroup.textShards) {
+      if (
+        account.number == "Unknown" &&
+        isBoundingPolyWithinRange(
+          textShard.boundingPoly.normalizedVertices,
+          "x",
+          0.65,
+          0.96
+        ) &&
+        isBoundingPolyWithinRange(
+          textShard.boundingPoly.normalizedVertices,
+          "y",
+          0.1935,
+          0.22
+        )
+      ) {
+        const shardText = strip(textShard.text);
+        const lineText = getGroupedShardTexts(textShardGroup);
+
+        if (!shardText.startsWith("ACCOUNT #")) continue;
+        const joinedLineText = lineText.join(" ");
+        const accountNumber = joinedLineText
+          .substring(joinedLineText.indexOf("ACCOUNT #") + 9)
+          .trim();
+        account.number = accountNumber;
+      }
+    }
+  }
+
+  return account;
+}
+
+function shortenDescription(description: string): string | undefined {
+  let shortened = description;
+
+  // TODO: determine whether to keep this in production...
+  const SHORTENED = shortened.toUpperCase();
+  if (SHORTENED.startsWith("FLA DEPT REVENUE")) shortened = "FDOR";
+  else if (SHORTENED.startsWith("WESTERN UNION")) shortened = "WU";
+
+  return shortened !== description ? shortened : undefined;
 }

@@ -10,11 +10,10 @@ import type {
 import type { TextShardGroup } from "@/types/ocr";
 import {
   getGroupedShardTexts,
-  getTextShardGroupsWithinRange,
-  getTextShardWithinRange,
   isBoundingPolyWithinRange,
   strip,
 } from "@/utils/ocr";
+import { emptyTransaction } from "../BankStatement";
 
 const DATE_REGEX = /^\d{2}\/\d{2}\/\d{2}/;
 const PERIOD_REGEX = /for (\w+ \d{1,2}, \d{4}) to (\w+ \d{1,2}, \d{4})/;
@@ -80,6 +79,7 @@ export function parseAccount(textShardGroups: TextShardGroup[][]): BankAccount {
   for (const textShardGroup of firstPage) {
     for (const textShard of textShardGroup.textShards) {
       if (
+        account.number == "Unknown" &&
         isBoundingPolyWithinRange(
           textShard.boundingPoly.normalizedVertices,
           "x",
@@ -418,14 +418,4 @@ function shortenDescription(description: string): string | undefined {
   else if (SHORTENED.startsWith("WESTERN UNION")) shortened = "WU";
 
   return shortened !== description ? shortened : undefined;
-}
-
-function emptyTransaction(): Transaction {
-  return {
-    date: "",
-    description: {
-      original: "",
-    },
-    amount: -1,
-  };
 }
