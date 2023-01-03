@@ -132,9 +132,11 @@ export class BankStatement {
         const accuracy =
           (this.getTotalDeposits() / this.summary.totals.deposits) * 100;
         console.error(
-          `x [${this.company.name} (${this.bank}) - (from ${
-            this.period.start
-          } to ${this.period.end})] Deposits are inaccurate. Summary Total: $${
+          `x [${this.company.name} (${this.bank} #${this.account.number.slice(
+            -4
+          )}) - (from ${this.period.start} to ${
+            this.period.end
+          })] Deposits are inaccurate. Summary Total: $${
             this.summary.totals.deposits
           } • Calculated Total: $${this.getTotalDeposits()} • Instances: ${
             this.deposits.length
@@ -144,7 +146,15 @@ export class BankStatement {
         );
       } else {
         console.log(
-          `✓ [${this.company.name} (${this.bank}) - (from ${this.period.start} to ${this.period.end})] Deposits are accurate. Summary Total: $${this.summary.totals.deposits} • Calculated Total: $${this.summary.totals.deposits} • Instances: ${this.deposits.length} • 100.00% accuracy!`
+          `✓ [${this.company.name} (${this.bank} #${this.account.number.slice(
+            -4
+          )}) - (from ${this.period.start} to ${
+            this.period.end
+          })] Deposits are accurate. Summary Total: $${
+            this.summary.totals.deposits
+          } • Calculated Total: $${this.summary.totals.deposits} • Instances: ${
+            this.deposits.length
+          } • 100.00% accuracy!`
         );
       }
     if (this.withdrawals && this.summary.totals.withdrawals)
@@ -152,9 +162,9 @@ export class BankStatement {
         const accuracy =
           (this.getTotalWithdrawals() / this.summary.totals.withdrawals) * 100;
         console.error(
-          `x [${this.company.name} (${this.bank}) - (from ${
-            this.period.start
-          } to ${
+          `x [${this.company.name} (${this.bank} #${this.account.number.slice(
+            -4
+          )}) - (from ${this.period.start} to ${
             this.period.end
           })] Withdrawals are inaccurate. Summary Total: $${
             this.summary.totals.withdrawals
@@ -171,7 +181,15 @@ export class BankStatement {
         );
       } else {
         console.log(
-          `✓ [${this.company.name} (${this.bank}) - (from ${this.period.start} to ${this.period.end})] Withdrawals are accurate. Summary Total: $${this.summary.totals.withdrawals} • Calculated Total: $${this.summary.totals.withdrawals} • Instances: ${this.withdrawals.length} • 100.00% accuracy!`
+          `✓ [${this.company.name} (${this.bank} #${this.account.number.slice(
+            -4
+          )}) - (from ${this.period.start} to ${
+            this.period.end
+          })] Withdrawals are accurate. Summary Total: $${
+            this.summary.totals.withdrawals
+          } • Calculated Total: $${
+            this.summary.totals.withdrawals
+          } • Instances: ${this.withdrawals.length} • 100.00% accuracy!`
         );
       }
   }

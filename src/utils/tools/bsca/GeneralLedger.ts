@@ -34,6 +34,8 @@ export class GeneralLedger {
 
   // TODO: FIX why ROYAL BEAUTY, INC. has 73.99% accuracy... it should be 99.57% AT LEAST.
   // YES: This happens because of the uniqueLines feature in the OCR... (src/utils/ocr.ts)
+  // Note: Maybe this is a good thing, make sure that before we werent just recording extra entries,
+  // so let's make sure to get 100% accuracy this time!
 
   parse() {
     if (!this.parseGLFormat()) return;
