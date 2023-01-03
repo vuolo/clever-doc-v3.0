@@ -239,10 +239,13 @@ export default function StatementAccuracy({ coder }: Props) {
       </table>
 
       {coder.bankStatement.summary.totals.deposits == -1 ? (
-        <h1 className="mt-4 text-center text-sm text-brand-muted-red drop-shadow-sm">
+        <h1 className="mt-4 text-center text-sm text-mono-400 drop-shadow-sm">
           <span>
-            <span className="underline underline-offset-2">WARNING</span>: There
-            <b>may</b> be an inaccuracy with the calculated number of{" "}
+            <span className="text-brand-muted-red underline underline-offset-2">
+              WARNING
+            </span>
+            : There
+            <b> may</b> be an inaccuracy with the calculated number of{" "}
             <span className="underline underline-offset-2">withdrawals</span>{" "}
             (see above) against the actual number of{" "}
             <span className="underline underline-offset-2">withdrawals</span> on
@@ -251,10 +254,12 @@ export default function StatementAccuracy({ coder }: Props) {
         </h1>
       ) : Math.abs(calculatedTotalWithdrawals) !=
         Math.abs(coder.bankStatement.summary.totals.withdrawals ?? -1) ? (
-        <h1 className="mt-4 text-center text-sm text-brand-muted-red drop-shadow-sm">
+        <h1 className="mt-4 text-center text-sm text-mono-400 drop-shadow-sm">
           <span>
-            <span className="underline underline-offset-2">WARNING</span>: There
-            is an inaccuracy with the calculated number of{" "}
+            <span className="text-brand-muted-red underline underline-offset-2">
+              WARNING
+            </span>
+            : There is an inaccuracy with the calculated number of{" "}
             <span className="underline underline-offset-2">withdrawals</span>{" "}
             (see above) against the actual number of{" "}
             <span className="underline underline-offset-2">withdrawals</span> on
@@ -273,10 +278,13 @@ export default function StatementAccuracy({ coder }: Props) {
           </span>
         </h1>
       ) : coder.bankStatement.summary.totals.deposits == -1 ? (
-        <h1 className="mt-4 text-center text-sm text-brand-muted-red drop-shadow-sm">
+        <h1 className="mt-4 text-center text-sm text-mono-400 drop-shadow-sm">
           <span>
-            <span className="underline underline-offset-2">WARNING</span>: There
-            <b>may</b> be an inaccuracy with the calculated number of{" "}
+            <span className="text-brand-muted-red underline underline-offset-2">
+              WARNING
+            </span>
+            : There
+            <b> may</b> be an inaccuracy with the calculated number of{" "}
             <span className="underline underline-offset-2">deposits</span> (see
             above) against the actual number of{" "}
             <span className="underline underline-offset-2">deposits</span> on
@@ -285,10 +293,12 @@ export default function StatementAccuracy({ coder }: Props) {
         </h1>
       ) : Math.abs(calculatedTotalDeposits) !=
         Math.abs(coder.bankStatement.summary.totals.deposits ?? -1) ? (
-        <h1 className="mt-4 text-center text-sm text-brand-muted-red drop-shadow-sm">
+        <h1 className="mt-4 text-center text-sm text-mono-400 drop-shadow-sm">
           <span>
-            <span className="underline underline-offset-2">WARNING</span>: There
-            is an inaccuracy with the calculated number of{" "}
+            <span className="text-brand-muted-red underline underline-offset-2">
+              WARNING
+            </span>
+            : There is an inaccuracy with the calculated number of{" "}
             <span className="underline underline-offset-2">deposits</span> (see
             above) against the actual number of{" "}
             <span className="underline underline-offset-2">deposits</span> on
