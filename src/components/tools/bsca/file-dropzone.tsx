@@ -83,7 +83,7 @@ export default function FileDropzone({ codeTransactions }: Props): JSX.Element {
         ({
           name: file.name,
           structure: "Unknown",
-          url: "api/uploads/unknown",
+          url: "api/uploads/unknown-user/unknown",
           size: file.size,
           hash: `uuid-${fileHandler.hash_uuid()}`,
           file: file,

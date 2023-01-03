@@ -874,6 +874,7 @@ export default function CoderTable({
               </td>
             </tr>
           )}
+
           {table.getRowModel().rows.map((row) => (
             <MemoizedTableRow
               key={
