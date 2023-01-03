@@ -483,6 +483,7 @@ export default function CoderTable({
                       }
                     }
                     menuPlacement="auto"
+                    menuShouldScrollIntoView={false}
                     classNames={{
                       control: (state) =>
                         state.isFocused
@@ -573,6 +574,7 @@ export default function CoderTable({
                         "Type to create an entry description..."
                       }
                       menuPlacement="auto"
+                      menuShouldScrollIntoView={false}
                       classNames={{
                         control: (state) =>
                           state.isFocused
@@ -660,6 +662,7 @@ export default function CoderTable({
                       "Type to create an entry description..."
                     }
                     menuPlacement="auto"
+                    menuShouldScrollIntoView={false}
                     classNames={{
                       control: (state) =>
                         state.isFocused
