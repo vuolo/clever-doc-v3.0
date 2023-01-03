@@ -308,8 +308,8 @@ export default function CoderResults({ coders, setCoders }: Props) {
           </button>
         </div>
       </div>
-      {(tableTransactionType === "withdrawals" ||
-        tableTransactionType == "deposits") && (
+      {tableTransactionType === "withdrawals" ||
+      tableTransactionType == "deposits" ? (
         <CoderTable
           coder={coders[selectedCoderIndex] as Coder}
           coderIndex={selectedCoderIndex}
@@ -317,6 +317,12 @@ export default function CoderResults({ coders, setCoders }: Props) {
           transactionType={tableTransactionType}
           displayShortenedDescriptions={displayShortenedDescriptions}
         />
+      ) : (
+        <div className="flex h-full w-full justify-center">
+          <h1 className="text-md mt-8 text-mono-500">
+            Coming Soon! Check back later.
+          </h1>
+        </div>
       )}
     </>
   );

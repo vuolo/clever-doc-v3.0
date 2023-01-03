@@ -359,8 +359,10 @@ function parseTransactions(
                 ? "WITHDRAWALS"
                 : ""
             )
-          )
+          ) {
             foundTable = true;
+            continue; // Move to next line...
+          }
         }
         if (!foundTable) continue;
 
@@ -374,14 +376,10 @@ function parseTransactions(
               ? "Total Withdrawals"
               : ""
           ) ||
-          shardText.includes(
-            type === "deposits"
-              ? "WITHDRAWALS"
-              : type === "withdrawals"
-              ? "FEES"
-              : ""
-          ) ||
-          shardText.includes("FEES")
+          // TODO: Add a bounding poly check here?
+          // This is a hack to get around the fact that Regions doesn't include a "Totals" line if there's only one transaction
+          (textShardGroup.textShards.length === 1 &&
+            (shardText === "WITHDRAWALS" || shardText === "FEES"))
         )
           return transactions;
 
