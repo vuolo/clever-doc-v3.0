@@ -32,6 +32,9 @@ export class GeneralLedger {
     this.parse();
   }
 
+  // TODO: FIX why ROYAL BEAUTY, INC. has 73.99% accuracy... it should be 99.57% AT LEAST.
+  // YES: Also check if this happens because of the uniqueLines feature in the OCR.
+
   parse() {
     if (!this.parseGLFormat()) return;
 
@@ -102,7 +105,7 @@ export class GeneralLedger {
           accountTotal = parseFloat(accountTotal.toFixed(2));
           if (account.amountTotal !== accountTotal) {
             console.error(
-              `... [${this.company.name} - (from ${this.period.start} to ${this.period.end})] The total amount (${accountTotal}) for the account ${account.number} ${account.name} does not match the amountTotal (${account.amountTotal}).`
+              `... [${this.company.name} - (from ${this.period.start} to ${this.period.end})] The total amount (${accountTotal}) for the account ${account.number} ${account.name} does not match the calculated amount total (${account.amountTotal}).`
             );
           }
         }
