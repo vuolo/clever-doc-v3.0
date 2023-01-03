@@ -10,6 +10,7 @@ import {
   useReactTable,
 } from "@tanstack/react-table";
 import {
+  Check,
   FileLock2,
   FileQuestion,
   FileSpreadsheet,
@@ -18,6 +19,7 @@ import {
   Redo,
   Trash2,
   View,
+  X,
 } from "lucide-react";
 import Link from "next/link";
 
@@ -54,7 +56,6 @@ export default function FileTable({
               target="_blank"
               className="font-semibold hover:cursor-pointer hover:underline"
             >
-              {/* TODO: figure out why below line says "Type instantiation is excessively deep and possibly infinite" */}
               {info.getValue()}
             </Link>
           </div>
@@ -64,9 +65,20 @@ export default function FileTable({
         header: "STRUCTURE",
         cell: (info) => (
           <div className="flex space-x-2">
-            {/* TODO: add maybe a red X icon and/or red text whenever the structure is "Unknown" */}
             {!info.row.original.uploading && !info.row.original.parsing ? (
-              <span>{info.getValue()}</span>
+              <>
+                {info.getValue() === "Unknown" ? (
+                  <div className="flex items-center space-x-2 text-red-500">
+                    <X className="h-4 w-4" />
+                    <p>Unknown</p>
+                  </div>
+                ) : (
+                  <div className="flex items-center space-x-2">
+                    <Check className="h-4 w-4" />
+                    <p>{info.getValue()}</p>
+                  </div>
+                )}
+              </>
             ) : info.row.original.uploading ? (
               <>
                 <Loader2 size={20} className="animate-spin" />
