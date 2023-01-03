@@ -27,7 +27,7 @@ export class GeneralLedger {
     ) as TextShardGroup[][];
     // Uncomment this below to pass the OCR data to the client. This is not recommended, so use for debugging only.
     // this.textShards = this.#textShards;
-    // this.textShardGroups = this.#textShardGroups;
+    this.textShardGroups = this.#textShardGroups;
 
     this.parse();
   }
@@ -105,9 +105,12 @@ export class GeneralLedger {
 
           // Round to 2 decimal places
           accountTotal = parseFloat(accountTotal.toFixed(2));
-          if (account.amountTotal !== accountTotal) {
+          if (
+            account.amountTotal !== undefined &&
+            account.amountTotal !== accountTotal
+          ) {
             console.error(
-              `... [${this.company.name} - (from ${this.period.start} to ${this.period.end})] The total amount (${accountTotal}) for the account ${account.number} ${account.name} does not match the calculated amount total (${account.amountTotal}).`
+              `... [${this.company.name} - (from ${this.period.start} to ${this.period.end})] The parsed total amount (${account.amountTotal}) for the account ${account.number} ${account.name} does not match the calculated amount total (${accountTotal}).`
             );
           }
         }

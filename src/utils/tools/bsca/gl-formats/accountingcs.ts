@@ -258,6 +258,15 @@ export function parseAccounts(
             const endingBalance = lineText[lineText.length - 1];
             const amountTotal = lineText[lineText.length - 2];
 
+            // // Force add the entries to the account
+            // const account = accounts.find((a) => a.number == accountNumber);
+            // if (account) {
+            //   account.entries.push(...curEntries);
+            //   account.endingBalance = getAmount(endingBalance);
+            //   account.amountTotal = getAmount(amountTotal);
+            //   curAccountNumber = "";
+            // }
+
             // Only push entries if the totals' account number matches the current account number (meaning the entries we have been collecting are accurate and for this account)
             const account = accounts.find((a) => a.number == accountNumber);
             if (account?.number == curAccountNumber) {

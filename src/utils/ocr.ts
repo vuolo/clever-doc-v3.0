@@ -155,30 +155,12 @@ export function getTextShardsAsLines(
     line.boundingPoly = getCombinedBoundingPoly(line);
   });
 
-  // Remove all duplicate lines, meaining the another line's textShards match the any of the current line's textShards indices.
-  // This is a hacky way to remove duplicate lines at the end of pages, which happens somewhere in the above lines creation process.
-  const uniqueLines = [] as TextShardGroup[];
-  lines.forEach((line) => {
-    const duplicateLine = uniqueLines.find((uniqueLine) =>
-      uniqueLine.textShards.some((textShard) =>
-        line.textShards.some(
-          (lineTextShard) =>
-            lineTextShard.indices.start === textShard.indices.start &&
-            lineTextShard.indices.end === textShard.indices.end
-        )
-      )
-    );
-    if (!duplicateLine) {
-      uniqueLines.push(line);
-    }
-  });
-
   // If separateByPage is true, then separate the lines by page
   if (separateByPage) {
     const linesByPage = [] as TextShardGroup[][];
     let currentPage = 0;
     let currentLines = [] as TextShardGroup[];
-    uniqueLines.forEach((line) => {
+    lines.forEach((line) => {
       if (line.page !== currentPage) {
         linesByPage.push(currentLines);
         currentLines = [];
@@ -187,10 +169,42 @@ export function getTextShardsAsLines(
       currentLines.push(line);
     });
     linesByPage.push(currentLines);
+
+    // Look at the last 2 lines of each page and see if they're the same. If they are, remove the last line.
+    linesByPage.forEach((lines) => {
+      const lastLine = lines[lines.length - 1];
+      const secondToLastLine = lines[lines.length - 2];
+      if (
+        lastLine &&
+        secondToLastLine &&
+        lastLine.textShards.length === secondToLastLine.textShards.length
+      ) {
+        let sameLines = true;
+        for (let i = 0; i < lastLine.textShards.length; i++) {
+          const lastLineTextShard = lastLine.textShards[i];
+          const secondToLastLineTextShard = secondToLastLine.textShards[i];
+          if (!lastLineTextShard || !secondToLastLineTextShard) continue;
+          if (
+            lastLineTextShard.indices.start !==
+              secondToLastLineTextShard.indices.start ||
+            lastLineTextShard.indices.end !==
+              secondToLastLineTextShard.indices.end
+          ) {
+            sameLines = false;
+            break;
+          }
+        }
+
+        if (sameLines) {
+          lines.pop();
+        }
+      }
+    });
+
     return linesByPage;
   }
 
-  return uniqueLines;
+  return lines;
 }
 
 function getCombinedBoundingPoly(
