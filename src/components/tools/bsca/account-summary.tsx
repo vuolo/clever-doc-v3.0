@@ -1,17 +1,4 @@
-import { useEffect, useState } from "react";
-import {
-  Check,
-  ChevronDown,
-  FileClock,
-  Info,
-  Landmark,
-  Link,
-  ListOrdered,
-  ScanLine,
-  SidebarOpen,
-  View,
-  X,
-} from "lucide-react";
+import { Landmark, ScanLine, X } from "lucide-react";
 
 import type { Coder } from "@/utils/tools/bsca/Coder";
 

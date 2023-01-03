@@ -13,7 +13,6 @@ import {
   FileLock2,
   FileQuestion,
   FileSpreadsheet,
-  FileText,
   Loader2,
   MoreVertical,
   Redo,

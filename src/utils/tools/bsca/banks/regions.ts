@@ -274,7 +274,7 @@ export function parseSummary(
       }
 
       // Checks
-      if (!summary.totals.checks) {
+      if (summary.totals.checks === undefined) {
         const shardText = strip(textShard.text);
         if (shardText.includes("Checks")) {
           for (const shard of textShardGroup.textShards) {
@@ -290,7 +290,7 @@ export function parseSummary(
       }
 
       // Fees
-      if (!summary.totals.fees) {
+      if (summary.totals.fees === undefined) {
         const shardText = strip(textShard.text);
         if (shardText.includes("Fees")) {
           for (const shard of textShardGroup.textShards) {

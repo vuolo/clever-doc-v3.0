@@ -1,5 +1,5 @@
 import { create } from "xmlbuilder2";
-import { type XMLBuilder } from "xmlbuilder2/lib/interfaces";
+import type { XMLBuilder } from "xmlbuilder2/lib/interfaces";
 
 import { type Coder } from "./Coder";
 

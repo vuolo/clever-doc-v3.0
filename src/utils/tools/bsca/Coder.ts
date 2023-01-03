@@ -7,7 +7,7 @@ import type {
   LevenshteinAccountSelection,
   LevenshteinAccountSelectionOverride,
   LevenshteinTransaction,
-} from "@/types/tools/bsca";
+} from "@/types/tools/bsca/coder";
 
 const emptySelection = {
   account: {

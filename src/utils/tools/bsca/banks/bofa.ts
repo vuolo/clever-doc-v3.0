@@ -245,6 +245,7 @@ export function parseSummary(
             if (!result || !result[0]) continue;
 
             summary.totals.deposits = parseFloat(result[0].replace(/,/g, ""));
+            break;
           }
         }
       }
@@ -262,12 +263,13 @@ export function parseSummary(
             summary.totals.withdrawals = parseFloat(
               result[0].replace(/,/g, "")
             );
+            break;
           }
         }
       }
 
       // Checks
-      if (!summary.totals.checks) {
+      if (summary.totals.checks === undefined) {
         const shardText = strip(textShard.text);
         if (shardText.includes("Checks")) {
           for (const shard of textShardGroup.textShards) {
@@ -277,12 +279,13 @@ export function parseSummary(
             if (!result || !result[0]) continue;
 
             summary.totals.checks = parseFloat(result[0].replace(/,/g, ""));
+            break;
           }
         }
       }
 
       // Fees
-      if (!summary.totals.fees) {
+      if (summary.totals.fees === undefined) {
         const shardText = strip(textShard.text);
         if (shardText.includes("Service fees")) {
           for (const shard of textShardGroup.textShards) {
@@ -292,6 +295,7 @@ export function parseSummary(
             if (!result || !result[0]) continue;
 
             summary.totals.fees = parseFloat(result[0].replace(/,/g, ""));
+            break;
           }
         }
       }

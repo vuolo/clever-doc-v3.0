@@ -1,39 +1,21 @@
-import { type Dispatch, type SetStateAction, useEffect, useState } from "react";
+import { type Dispatch, type SetStateAction, useState } from "react";
 import Switch from "react-switch";
-import { Menu, MenuItem, MenuDivider } from "@szhsin/react-menu";
+import { Menu, MenuItem } from "@szhsin/react-menu";
 import "@szhsin/react-menu/dist/index.css";
 import "@szhsin/react-menu/dist/transitions/slide.css";
 import toast from "react-hot-toast";
 
 import {
-  ArrowDownLeft,
-  ArrowRight,
   ArrowUpRight,
   Banknote,
-  Check,
   ChevronDown,
-  Cog,
-  CornerRightDown,
-  CornerRightUp,
-  Download,
   FileClock,
   FileCog,
-  FileLock,
   FileLock2,
   FileSpreadsheet,
-  Forward,
-  FunctionSquare,
-  Info,
-  Keyboard,
-  Landmark,
   Link,
-  ListOrdered,
-  ScanLine,
   SidebarClose,
   SidebarOpen,
-  SortDesc,
-  View,
-  X,
 } from "lucide-react";
 
 import {
@@ -157,16 +139,21 @@ export default function CoderResults({ coders, setCoders }: Props) {
                 </button>
                 <div
                   id="bankStatementList"
-                  className="mt-4 mb-4 flex w-full flex-col items-center space-y-4 overflow-auto"
+                  className="mt-4 mb-4 flex w-full flex-col items-center space-y-4 overflow-auto py-2"
                 >
                   {coders.map((coder, index) => (
                     <button
                       key={index}
                       onClick={() => {
+                        if (selectedCoderIndex === index) return;
                         setSelectedCoderIndex(index);
                         setBankStatementSidebarOpen(false);
                       }}
-                      className="inline-flex h-fit w-[200px] items-center justify-between rounded-md border border-transparent bg-mono-500 px-3 py-2 text-sm font-bold text-white shadow-md hover:bg-mono-400 focus:outline-none focus:ring-2 focus:ring-mono-500 focus:ring-offset-2"
+                      className={`inline-flex h-fit w-[200px] items-center justify-between rounded-md border border-transparent px-3 py-2 text-sm font-bold text-white shadow-md ${
+                        selectedCoderIndex === index
+                          ? "cursor-not-allowed bg-brand-gold"
+                          : "bg-mono-500 hover:bg-mono-400 focus:outline-none focus:ring-2 focus:ring-mono-500 focus:ring-offset-2 "
+                      }`}
                     >
                       <h3 className="mr-2">{index + 1}.</h3>
                       <h3>

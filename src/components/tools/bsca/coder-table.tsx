@@ -1,5 +1,5 @@
-import { memo, useMemo, useReducer, useRef, useState } from "react";
-import Select, { OptionsOrGroups } from "react-select";
+import { memo, useMemo, useState } from "react";
+import Select from "react-select";
 import CreatableSelect from "react-select/creatable";
 import { Tooltip } from "react-tooltip";
 import "react-tooltip/dist/react-tooltip.css";
@@ -13,25 +13,18 @@ import {
   flexRender,
   getCoreRowModel,
   useReactTable,
-  Row,
+  type Row,
 } from "@tanstack/react-table";
 import {
   CheckCircle2,
   Edit2,
   Edit3,
-  FileLock,
-  FileSpreadsheet,
-  FileText,
   Info,
   ListEnd,
-  Loader2,
   MoreVertical,
-  Pencil,
-  Redo,
   Save,
   Trash2,
   Undo,
-  View,
   X,
 } from "lucide-react";
 
@@ -40,7 +33,7 @@ import type {
   LevenshteinAccountMatch,
   LevenshteinEntryMatch,
   LevenshteinTransaction,
-} from "@/types/tools/bsca";
+} from "@/types/tools/bsca/coder";
 
 type Props = {
   coder: Coder;

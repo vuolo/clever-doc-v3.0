@@ -70,8 +70,9 @@ export default function Main(): JSX.Element {
             <hr className="h-4" />
             <FileDropzone codeTransactions={codeTransactions} />
           </>
-        ) : // <CoderResults coders={coders} setCoders={setCoders} />
-        null}
+        ) : (
+          <CoderResults coders={coders} setCoders={setCoders} />
+        )}
         {isCoding && (
           <ProgressBar
             className="absolute bottom-0 m-2 w-full"

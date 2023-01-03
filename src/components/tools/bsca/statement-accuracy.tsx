@@ -1,25 +1,13 @@
-import { useEffect, useState } from "react";
-import Switch from "react-switch";
+import { useState } from "react";
 import { Tooltip } from "react-tooltip";
 import "react-tooltip/dist/react-tooltip.css";
 
 import {
-  ArrowUpRight,
   Check,
-  CheckCircle,
-  ChevronDown,
-  ChevronRight,
   CornerDownRight,
-  CornerRightUp,
-  CornerUpRight,
-  FileClock,
   HelpCircle,
   Info,
-  Landmark,
-  Link,
   ListOrdered,
-  ScanLine,
-  SidebarOpen,
   View,
   X,
 } from "lucide-react";
