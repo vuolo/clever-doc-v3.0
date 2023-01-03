@@ -18,6 +18,7 @@ import { emptyTransaction } from "../BankStatement";
 const DATE_REGEX = /^\d{2}\/\d{2}\/\d{2}/;
 const PERIOD_REGEX = /for (\w+ \d{1,2}, \d{4}) to (\w+ \d{1,2}, \d{4})/;
 const AMOUNT_REGEX = /-?\d{1,3}(,\d{3})*\.\d{2}/;
+const AMOUNT_END_REGEX = /-?\d{1,3}(,\d{3})*\.\d{2}$/;
 
 export function isBank(textShardGroups: TextShardGroup[][]): boolean {
   const firstPage = textShardGroups[0];
@@ -369,12 +370,12 @@ function parseTransactions(
         )
           return transactions;
 
-        // Ensure there are at least 3 items, representing a table row
-        if (textShardGroup.textShards.length <= 2) continue;
+        const lineText = getGroupedShardTexts(textShardGroup);
+        const joinedLineText = lineText.join(" ");
 
         // Date
         if (!curTransaction.date) {
-          const dateText = textShardGroup.textShards[0]?.text;
+          const dateText = joinedLineText;
           const dateMatch = dateText?.match(DATE_REGEX);
           if (dateText && dateMatch && dateMatch.index !== undefined) {
             const date = dateText.slice(dateMatch.index, dateMatch.index + 8);
@@ -386,8 +387,11 @@ function parseTransactions(
 
         // Description
         // TODO: possibly include multi-line descriptions
-        else if (!curTransaction.description.original) {
-          const descriptionText = textShardGroup.textShards[1]?.text;
+        if (!curTransaction.description.original) {
+          const descriptionText = joinedLineText
+            .replace(DATE_REGEX, "")
+            .replace(AMOUNT_END_REGEX, "")
+            .trim();
           if (descriptionText) {
             curTransaction.description.original = descriptionText;
             curTransaction.description.shortened =
@@ -396,8 +400,8 @@ function parseTransactions(
         }
 
         // Amount
-        else if (curTransaction.amount === -1) {
-          const result = AMOUNT_REGEX.exec(shardText);
+        if (curTransaction.amount === -1) {
+          const result = AMOUNT_END_REGEX.exec(joinedLineText);
           if (!result || !result[0]) continue;
 
           curTransaction.amount = parseFloat(result[0].replace(/,/g, ""));
@@ -405,6 +409,44 @@ function parseTransactions(
           transactions.push(curTransaction);
           break;
         }
+
+        // @DEPRECIATED: This is the old way of parsing transactions, which is now deprecated because sometimes some textShards are combined
+        // // Ensure there are at least 3 items, representing a table row
+        // if (textShardGroup.textShards.length <= 2) continue;
+
+        // // Date
+        // if (!curTransaction.date) {
+        //   const dateText = textShardGroup.textShards[0]?.text;
+        //   const dateMatch = dateText?.match(DATE_REGEX);
+        //   if (dateText && dateMatch && dateMatch.index !== undefined) {
+        //     const date = dateText.slice(dateMatch.index, dateMatch.index + 8);
+        //     const dateFormatted = moment(date, "MM/DD/YY").format("MM/DD/YYYY");
+
+        //     curTransaction.date = dateFormatted;
+        //   }
+        // }
+
+        // // Description
+        // // TODO: possibly include multi-line descriptions
+        // else if (!curTransaction.description.original) {
+        //   const descriptionText = textShardGroup.textShards[1]?.text;
+        //   if (descriptionText) {
+        //     curTransaction.description.original = descriptionText;
+        //     curTransaction.description.shortened =
+        //       shortenDescription(descriptionText);
+        //   }
+        // }
+
+        // // Amount
+        // else if (curTransaction.amount === -1) {
+        //   const result = AMOUNT_REGEX.exec(shardText);
+        //   if (!result || !result[0]) continue;
+
+        //   curTransaction.amount = parseFloat(result[0].replace(/,/g, ""));
+
+        //   transactions.push(curTransaction);
+        //   break;
+        // }
       }
     }
   }
