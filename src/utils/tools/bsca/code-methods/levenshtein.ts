@@ -7,7 +7,7 @@ import type {
   LevenshteinAccountMatch,
   LevenshteinEntryMatch,
   LevenshteinTransaction,
-} from "@/types/tools/bsca";
+} from "@/types/tools/bsca/coder";
 
 export function code(
   bankStatement: BankStatement,
