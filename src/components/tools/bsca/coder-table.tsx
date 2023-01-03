@@ -864,6 +864,16 @@ export default function CoderTable({
           ))}
         </thead>
         <tbody className="bg-mono-50 text-sm shadow-lg">
+          {/* Display a message whenever there are no transactions to display... */}
+          {table.getRowModel().rows.length == 0 && (
+            <tr className="h-20 border border-mono-150">
+              <td className="text-center" colSpan={99999}>
+                <p className="text-sm text-gray-500">
+                  No transactions to display...
+                </p>
+              </td>
+            </tr>
+          )}
           {table.getRowModel().rows.map((row) => (
             <MemoizedTableRow
               key={
