@@ -374,7 +374,14 @@ function parseTransactions(
               ? "Total Withdrawals"
               : ""
           ) ||
-          shardText.includes(type === "deposits" ? "WITHDRAWALS" : "FEES")
+          shardText.includes(
+            type === "deposits"
+              ? "WITHDRAWALS"
+              : type === "withdrawals"
+              ? "FEES"
+              : ""
+          ) ||
+          shardText.includes("FEES")
         )
           return transactions;
 
