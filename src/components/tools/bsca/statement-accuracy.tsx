@@ -194,7 +194,10 @@ export default function StatementAccuracy({ coder }: Props) {
                       checked={includeFees}
                       type="checkbox"
                       value=""
-                      disabled={coder.bankStatement.summary.totals.fees == -1}
+                      disabled={
+                        coder.bankStatement.summary.totals.fees == -1 ||
+                        coder.bankStatement.summary.totals.fees === undefined
+                      }
                       className="float-left ml-2 mr-2 h-4 w-4 cursor-pointer rounded-sm border border-gray-300 bg-white bg-contain bg-center bg-no-repeat align-top accent-green-700 transition duration-200 checked:border-brand-gold checked:bg-brand-gold focus:outline-none disabled:cursor-not-allowed"
                     />
                     {/* <Switch

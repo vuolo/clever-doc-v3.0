@@ -90,8 +90,12 @@ export function parseAccount(textShardGroups: TextShardGroup[][]): BankAccount {
         isBoundingPolyWithinRange(
           textShard.boundingPoly.normalizedVertices,
           "y",
-          0.435,
+          // Sometimes, the account name is short or large. If it is large, the bounding poly is slightly lower. So make it work for both cases:
+          0.41,
           0.455
+          // With a large (2-lined) account name:
+          // 0.435,
+          // 0.455
         )
       ) {
         const shardText = strip(textShard.text);
@@ -126,8 +130,12 @@ export function parsePeriod(textShardGroups: TextShardGroup[][]): Period {
         isBoundingPolyWithinRange(
           textShard.boundingPoly.normalizedVertices,
           "y",
-          0.435,
+          // Sometimes, the account name is short or large. If it is large, the bounding poly is slightly lower. So make it work for both cases:
+          0.41,
           0.455
+          // With a large (2-lined) account name:
+          // 0.435,
+          // 0.455
         )
       ) {
         const shardText = strip(textShard.text);
@@ -191,8 +199,12 @@ export function parseSummary(
         isBoundingPolyWithinRange(
           textShard.boundingPoly.normalizedVertices,
           "y",
-          0.49,
+          // Sometimes, the account name is short or large. If it is large, the bounding poly is slightly lower. So make it work for both cases:
+          0.46,
           0.515
+          // With a large (2-lined) account name:
+          // 0.49,
+          // 0.515
         )
       ) {
         const shardText = strip(textShard.text);
