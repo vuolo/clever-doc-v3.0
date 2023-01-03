@@ -212,7 +212,6 @@ async function splitBase64PDF(fileContents: string): Promise<string[]> {
   // Remove encryption if it exists
   if (pdfDoc.isEncrypted) {
     const decryptedPdfBytes = await decryptPdfBytes(pdfBytes);
-    console.log("decryptedPdfBytes", decryptedPdfBytes);
     pdfDoc = await PDFDocument.load(decryptedPdfBytes);
   }
 
@@ -255,11 +254,6 @@ async function splitBase64PDF(fileContents: string): Promise<string[]> {
     base64SplitPDFDocs.push(await doc.saveAsBase64());
   return base64SplitPDFDocs;
 }
-
-// function decryptPdfBytes(input: Buffer): Buffer {
-//   // Save the input buffer to a temporary file and decrypt it using node-qpdf2, store the decrypted file's contents buffer, and delete the temporary file, then return the decrypted file's contents buffer
-//   // Create a temporary file to store the input buffer
-// }
 
 async function decryptPdfBytes(input: Buffer): Promise<Buffer> {
   // Get the path to the operating system's temporary directory
