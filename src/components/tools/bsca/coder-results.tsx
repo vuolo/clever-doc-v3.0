@@ -103,18 +103,8 @@ export default function CoderResults({ coders, setCoders }: Props) {
                     </button> */}
             </>
           ) : (
-            // <button
-            //   // TODO: make a burger menu appear with a list of all the bank statements
-            //   onClick={undefined}
-            //   className="text-md inline-flex items-center rounded-md border border-transparent bg-brand px-6 py-2 font-bold text-white shadow-md hover:bg-brand-hover focus:outline-none focus:ring-2 focus:ring-mono-500 focus:ring-offset-2"
-            // >
-            //   {/* <Menu size={20} className="sm:mr-2" /> */}
-            //   <SidebarOpen size={20} className="sm:mr-2" />
-            //   <span className="hidden sm:block">Statements</span>
-            // </button>
             <>
               <button
-                // TODO: make a burger menu appear with a list of all the bank statements
                 onClick={() => setBankStatementSidebarOpen((prev) => !prev)}
                 className="text-md absolute left-0 z-[9999998] inline-flex h-[42px] w-fit items-center rounded-r-md border border-transparent bg-brand px-4 py-2 font-bold text-white shadow-md transition-all hover:bg-brand-hover focus:outline-none"
               >

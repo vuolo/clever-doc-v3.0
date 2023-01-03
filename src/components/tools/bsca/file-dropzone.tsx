@@ -46,9 +46,6 @@ export default function FileDropzone({ codeTransactions }: Props): JSX.Element {
   const [storedFiles, setStoredFiles] = useState<StoredFile[]>([]);
   const [isCoding, setIsCoding] = useState(false);
 
-  // TODO: figure out why requests batch instead of being sent one at a time
-  // EXAMPLE OF ISSUE: POST https://www.cleverdoc.ai/api/trpc/file.upload,file.upload?batch=1 413 (Request Entity Too Large)
-  // This happens on production because of the batch... but not on localhost
   const uploadFile = trpc.file.upload.useMutation({
     onSuccess() {
       toast.success("File uploaded successfully");
@@ -59,9 +56,6 @@ export default function FileDropzone({ codeTransactions }: Props): JSX.Element {
     },
   });
 
-  // TODO: figure out why requests batch instead of being sent one at a time
-  // EXAMPLE OF ISSUE: POST https://www.cleverdoc.ai/api/trpc/bsca.parse,bsca.parse?batch=1 413 (Request Entity Too Large)
-  // This happens on production because of the batch... but not on localhost
   const parseFile = trpc.bsca.parse.useMutation({
     onSuccess() {
       toast.success("File parsed successfully");

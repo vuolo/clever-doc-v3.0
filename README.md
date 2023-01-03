@@ -18,4 +18,5 @@
 
 #### Supported Bank Statement formats:
 
-- TODO
+- Bank of America - Business
+- Regions - Business
