@@ -115,7 +115,12 @@ export class BankStatement {
 
   parseDeposits() {
     // Get the statement's year (for transaction dates)
-    const year = moment(this.period.start, "MM/DD/YYYY").format("YYYY");
+    let year = "2022";
+    try {
+      year = moment(this.period.start, "MM/DD/YYYY").format("YYYY");
+    } catch (error) {
+      console.log("Could parse the year from the period start...");
+    }
 
     if (this.bank === "Bank of America - Business")
       this.deposits = bofa.parseDeposits(this.#textShardGroups);
@@ -127,7 +132,12 @@ export class BankStatement {
 
   parseWithdrawals() {
     // Get the statement's year (for transaction dates)
-    const year = moment(this.period.start, "MM/DD/YYYY").format("YYYY");
+    let year = "2022";
+    try {
+      year = moment(this.period.start, "MM/DD/YYYY").format("YYYY");
+    } catch (error) {
+      console.log("Could parse the year from the period start...");
+    }
 
     if (this.bank === "Bank of America - Business")
       this.withdrawals = bofa.parseWithdrawals(this.#textShardGroups);
