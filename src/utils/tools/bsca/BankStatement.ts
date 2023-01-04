@@ -40,7 +40,7 @@ export class BankStatement {
     ) as TextShardGroup[][];
     // Uncomment this below to pass the OCR data to the client. This is not recommended, so use for debugging only.
     // this.textShards = this.#textShards;
-    this.textShardGroups = this.#textShardGroups;
+    // this.textShardGroups = this.#textShardGroups;
 
     // this.fillWithTestData();
     this.parse();
