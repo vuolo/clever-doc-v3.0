@@ -418,7 +418,8 @@ function parseTransactions(
 
           curTransaction.amount = parseFloat(result[0].replace(/,/g, ""));
 
-          transactions.push(curTransaction);
+          if (curTransaction.date && curTransaction.description.original)
+            transactions.push(curTransaction);
           break;
         }
 

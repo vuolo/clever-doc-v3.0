@@ -464,7 +464,8 @@ function parseTransactions(
             parseFloat(result[0].replace(/,/g, "")) *
             (type === "withdrawals" ? -1 : 1);
 
-          transactions.push(curTransaction);
+          if (curTransaction.date && curTransaction.description.original)
+            transactions.push(curTransaction);
           break;
         }
       }
