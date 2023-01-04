@@ -337,7 +337,7 @@ function parseTransactions(
   const transactions = [] as Transaction[];
   if (type !== "deposits" && type !== "withdrawals") return transactions;
 
-  // Transactions start on page 3 for Bank of America bank statements
+  // Transactions start on page 3 (index 2) for Bank of America bank statements
   for (const page of textShardGroups.slice(2)) {
     let foundTable = false;
     for (const textShardGroup of page) {

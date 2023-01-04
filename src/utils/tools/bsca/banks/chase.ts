@@ -14,6 +14,7 @@ import {
   isBoundingPolyWithinRange,
   strip,
 } from "@/utils/ocr";
+import { emptyTransaction } from "../BankStatement";
 
 const DATE_REGEX = /^\d{2}\/\d{2}/;
 const PERIOD_REGEX = /(\w+ \d{1,2}, \d{4}) through (\w+ \d{1,2}, \d{4})/;
@@ -96,8 +97,6 @@ export function parseAccount(textShardGroups: TextShardGroup[][]): BankAccount {
       ) {
         const shardText = strip(textShard.text);
         const lineText = getGroupedShardTexts(textShardGroup);
-
-        console.log(lineText);
 
         const query = "Account Number:";
         if (!shardText.startsWith(query)) continue;
@@ -336,6 +335,143 @@ export function parseSummary(
   }
 
   return summary;
+}
+
+export function parseDeposits(
+  textShardGroups: TextShardGroup[][],
+  year: string
+): Transaction[] {
+  return parseTransactions(textShardGroups, "deposits", year);
+}
+
+export function parseWithdrawals(
+  textShardGroups: TextShardGroup[][],
+  year: string
+): Transaction[] {
+  return parseTransactions(textShardGroups, "withdrawals", year);
+}
+
+function parseTransactions(
+  textShardGroups: TextShardGroup[][],
+  type: "deposits" | "withdrawals",
+  year: string
+): Transaction[] {
+  const transactions = [] as Transaction[];
+  if (type !== "deposits" && type !== "withdrawals") return transactions;
+
+  // Transactions start on page 2 (index 1) for Chase bank statements
+  for (const page of textShardGroups.slice(1)) {
+    let foundTable = false;
+    for (const textShardGroup of page) {
+      const curTransaction = emptyTransaction();
+      for (const textShard of textShardGroup.textShards) {
+        if (
+          !foundTable
+          // This is disabled because it's unnecessary to be honest...
+          //  &&
+          // isBoundingPolyWithinRange(
+          //   textShard.boundingPoly.normalizedVertices,
+          //   "x",
+          //   0.04,
+          //   0.5 // 0.37 (0.37 is for the start of the deposits section, 0.50 is for "continued" deposits section)
+          // )
+        ) {
+          const shardText = strip(textShard.text);
+
+          if (
+            shardText.includes(
+              type === "deposits"
+                ? "DEPOSITS AND ADDITIONS"
+                : type === "withdrawals"
+                ? "ATM & DEBIT CARD WITHDRAWALS"
+                : ""
+            ) ||
+            (type === "withdrawals" &&
+              shardText.includes("ELECTRONIC WITHDRAWALS"))
+          ) {
+            foundTable = true;
+            continue; // Move to next line...
+          }
+        }
+        if (!foundTable) continue;
+
+        // Look for the totals
+        const shardText = strip(textShard.text);
+        if (
+          type === "deposits" &&
+          shardText.includes("Total Deposits and Additions")
+        )
+          return transactions;
+        // Prevent ending on the "Total ATM & Debit Card Withdrawals" line, because of the "Total Electronic Withdrawals" line
+        else if (
+          type === "withdrawals" &&
+          shardText.includes("Total ATM & Debit Card Withdrawals")
+        ) {
+          foundTable = false;
+          break;
+        }
+        // Only return withdrawals on the "Total Electronic Withdrawals" line
+        else if (
+          type === "withdrawals" &&
+          shardText.includes("Total Electronic Withdrawals")
+        )
+          return transactions;
+
+        const lineText = getGroupedShardTexts(textShardGroup);
+        const joinedLineText = lineText.join(" ");
+
+        // Date
+        if (!curTransaction.date) {
+          const dateText = joinedLineText;
+          const dateMatch = dateText?.match(DATE_REGEX);
+          if (dateText && dateMatch && dateMatch.index !== undefined) {
+            let date = dateText.slice(dateMatch.index, dateMatch.index + 5);
+            date += `/${year.slice(2)}`;
+            const dateFormatted = moment(date, "MM/DD/YY").format("MM/DD/YYYY");
+
+            curTransaction.date = dateFormatted;
+          }
+        }
+
+        // Description
+        // TODO: possibly include multi-line descriptions
+        if (!curTransaction.description.original) {
+          const descriptionText = joinedLineText
+            .replace(DATE_REGEX, "")
+            .replace(AMOUNT_END_REGEX, "")
+            .trim();
+          if (descriptionText) {
+            curTransaction.description.original = descriptionText;
+            curTransaction.description.shortened =
+              shortenDescription(descriptionText);
+          }
+        }
+
+        // Amount
+        if (curTransaction.amount === -1) {
+          let textWithoutBarcode = joinedLineText;
+          // Ignore the barcode by checking the bounding box x start past 93%
+          if (textShard.boundingPoly.normalizedVertices.bottomLeft.x > 0.93) {
+            textWithoutBarcode = textWithoutBarcode
+              .replace(textWithoutBarcode.split(" ").splice(-1).join(" "), "")
+              .trim();
+          }
+
+          const result = AMOUNT_END_REGEX.exec(textWithoutBarcode);
+          if (!result || !result[0]) continue;
+
+          curTransaction.amount =
+            parseFloat(result[0].replace(/,/g, "")) *
+            (type === "withdrawals" ? -1 : 1);
+
+          transactions.push(curTransaction);
+          break;
+        }
+      }
+    }
+  }
+
+  return transactions;
 }
 
 function shortenDescription(description: string): string | undefined {

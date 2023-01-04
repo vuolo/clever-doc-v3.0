@@ -54,8 +54,8 @@ export class BankStatement {
     this.parseAccount();
     this.parsePeriod();
     this.parseSummary();
-    // this.parseDeposits();
-    // this.parseWithdrawals();
+    this.parseDeposits();
+    this.parseWithdrawals();
 
     // TODO: Implement this in a future update (not necessary for now)
     // this.parseFees();
@@ -154,7 +154,7 @@ export class BankStatement {
             this.deposits.length
           } • ${(accuracy > 100 ? 100 - (accuracy - 100) : accuracy).toFixed(
             2
-          )}% accuracy!`
+          )}% accuracy.`
         );
       } else {
         console.log(
@@ -166,7 +166,7 @@ export class BankStatement {
             this.summary.totals.deposits
           } • Calculated Total: $${this.summary.totals.deposits} • Instances: ${
             this.deposits.length
-          } • 100.00% accuracy!`
+          } • 100.00% accuracy.`
         );
       }
     if (this.withdrawals && this.summary.totals.withdrawals)

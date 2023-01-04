@@ -333,7 +333,7 @@ function parseTransactions(
   const transactions = [] as Transaction[];
   if (type !== "deposits" && type !== "withdrawals") return transactions;
 
-  // Transactions start on page 1 for Regions bank statements
+  // Transactions start on page 1 (index 0) for Regions bank statements
   for (const page of textShardGroups) {
     let foundTable = false;
     for (const textShardGroup of page) {
