@@ -849,7 +849,7 @@ export default function CoderTable({
         </>
       )}
 
-      <table className="w-full items-center">
+      <table key={coderIndex} className="w-full items-center">
         <thead className="text-left text-xs tracking-wider">
           {table.getHeaderGroups().map((headerGroup) => (
             <tr key={headerGroup.id}>
@@ -881,6 +881,7 @@ export default function CoderTable({
           {table.getRowModel().rows.map((row) => (
             <MemoizedTableRow
               key={
+                coderIndex +
                 row.id +
                 row.original.selection?.account.index +
                 row.original.selection?.entry.index +
@@ -895,6 +896,7 @@ export default function CoderTable({
               }
               row={row}
               displayShortenedDescriptions={displayShortenedDescriptions}
+              coderIndex={coderIndex}
             />
           ))}
         </tbody>
@@ -906,9 +908,11 @@ export default function CoderTable({
 function TableRowComponent({
   row,
   displayShortenedDescriptions, // KEEP ALTHOUGH "UNUSED"... this is used in the memoization
+  coderIndex, // KEEP ALTHOUGH "UNUSED"... this is used in the memoization
 }: {
   row: Row<LevenshteinTransaction>;
   displayShortenedDescriptions: boolean;
+  coderIndex: number;
 }) {
   // console.log("rendering row", row.index);
   return (
@@ -945,7 +949,9 @@ const MemoizedTableRow = memo(TableRowComponent, (prev, next) => {
     // amount
     prev.row.original.amount == next.row.original.amount &&
     // displayShortenedDescriptions
-    prev.displayShortenedDescriptions == next.displayShortenedDescriptions
+    prev.displayShortenedDescriptions == next.displayShortenedDescriptions &&
+    // coderIndex
+    prev.coderIndex == next.coderIndex
   );
 });
 

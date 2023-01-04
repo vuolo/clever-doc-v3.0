@@ -301,6 +301,7 @@ export default function CoderResults({ coders, setCoders }: Props) {
       {tableTransactionType === "withdrawals" ||
       tableTransactionType == "deposits" ? (
         <CoderTable
+          key={selectedCoderIndex}
           coder={coders[selectedCoderIndex] as Coder}
           coderIndex={selectedCoderIndex}
           updateCoder={updateCoder}

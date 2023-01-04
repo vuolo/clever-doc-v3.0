@@ -480,10 +480,17 @@ function shortenDescription(description: string): string | undefined {
     shortened = description.split(" Orig ID:")[0]?.trim() ?? description;
   else if (description.includes(" Transaction#:"))
     shortened = description.split(" Transaction#:")[0]?.trim() ?? description;
-  // TODO: attempt to remove "Card Purchase 03/07" from the start of shortened, or "Card Purchase With Pin 03/08" from the start of shortened,
+  // Attempt to remove "Card Purchase 03/07" from the start of shortened, or "Card Purchase With Pin 03/08" from the start of shortened,
+  const CARD_PURCHASE_REGEX = /^Card Purchase( With Pin)? \d{2}\/\d{2} /;
+  shortened = shortened.replace(CARD_PURCHASE_REGEX, "");
   // or "Non-Chase ATM Withdrawal 03/08" from the start of shortened, where the date is dynamic but always in that format MM/YY...
+  const NON_CHASE_ATM_WITHDRAWAL_REGEX =
+    /^Non-Chase ATM Withdrawal \d{2}\/\d{2} /;
+  shortened = shortened.replace(NON_CHASE_ATM_WITHDRAWAL_REGEX, "");
 
-  // TODO: attempt to remove "Card 2442" from the end of shortened, where the card number is dynamic but always 4 digits...
+  // Attempt to remove "Card 2442" from the end of shortened, where the card number is dynamic but always 4 digits...
+  const CARD_NUMBER_REGEX = / Card \d{4}$/;
+  shortened = shortened.replace(CARD_NUMBER_REGEX, "");
 
   // TODO: determine whether to keep this in production...
   const SHORTENED = shortened.toUpperCase();

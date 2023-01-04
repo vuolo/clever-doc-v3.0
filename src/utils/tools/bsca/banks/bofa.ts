@@ -470,6 +470,12 @@ function shortenDescription(description: string): string | undefined {
   let shortened = description;
   if (description.includes("DES:"))
     shortened = description.split("DES:")[0]?.trim() ?? description;
+  // Attempt to remove "CHECKCARD 0907" from the start of shortened, where the CHECKCARD number is dynamic but always 4 digits...
+  if (shortened.startsWith("CHECKCARD ")) {
+    const checkcardNumber = shortened.slice(10, 14);
+    if (checkcardNumber.length === 4 && !isNaN(parseInt(checkcardNumber)))
+      shortened = shortened.slice(14).trim();
+  }
 
   // TODO: determine whether to keep this in production...
   const SHORTENED = shortened.toUpperCase();
