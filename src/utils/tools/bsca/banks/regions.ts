@@ -97,10 +97,11 @@ export function parseAccount(textShardGroups: TextShardGroup[][]): BankAccount {
         const shardText = strip(textShard.text);
         const lineText = getGroupedShardTexts(textShardGroup);
 
-        if (!shardText.startsWith("ACCOUNT #")) continue;
+        const query = "ACCOUNT #";
+        if (!shardText.startsWith(query)) continue;
         const joinedLineText = lineText.join(" ");
         const accountNumber = joinedLineText
-          .substring(joinedLineText.indexOf("ACCOUNT #") + 9)
+          .substring(joinedLineText.indexOf(query) + query.length)
           .trim();
         account.number = accountNumber;
       }

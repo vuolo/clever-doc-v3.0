@@ -40,7 +40,7 @@ export class BankStatement {
     ) as TextShardGroup[][];
     // Uncomment this below to pass the OCR data to the client. This is not recommended, so use for debugging only.
     // this.textShards = this.#textShards;
-    // this.textShardGroups = this.#textShardGroups;
+    this.textShardGroups = this.#textShardGroups;
 
     // this.fillWithTestData();
     this.parse();
@@ -54,8 +54,10 @@ export class BankStatement {
     this.parseAccount();
     this.parsePeriod();
     this.parseSummary();
-    this.parseDeposits();
-    this.parseWithdrawals();
+    // this.parseDeposits();
+    // this.parseWithdrawals();
+
+    // TODO: Implement this in a future update (not necessary for now)
     // this.parseFees();
     // this.parseChecks();
   }
@@ -78,8 +80,10 @@ export class BankStatement {
   parseCompany() {
     if (this.bank === "Bank of America - Business")
       this.company = bofa.parseCompany(this.#textShardGroups);
-    if (this.bank === "Regions - Business")
+    else if (this.bank === "Regions - Business")
       this.company = regions.parseCompany(this.#textShardGroups);
+    else if (this.bank === "Chase - Business")
+      this.company = chase.parseCompany(this.#textShardGroups);
   }
 
   parseAccount() {
@@ -87,6 +91,8 @@ export class BankStatement {
       this.account = bofa.parseAccount(this.#textShardGroups);
     else if (this.bank === "Regions - Business")
       this.account = regions.parseAccount(this.#textShardGroups);
+    else if (this.bank === "Chase - Business")
+      this.account = chase.parseAccount(this.#textShardGroups);
   }
 
   parsePeriod() {
@@ -94,6 +100,8 @@ export class BankStatement {
       this.period = bofa.parsePeriod(this.#textShardGroups);
     else if (this.bank === "Regions - Business")
       this.period = regions.parsePeriod(this.#textShardGroups);
+    else if (this.bank === "Chase - Business")
+      this.period = chase.parsePeriod(this.#textShardGroups);
   }
 
   parseSummary() {
@@ -101,28 +109,32 @@ export class BankStatement {
       this.summary = bofa.parseSummary(this.#textShardGroups);
     else if (this.bank === "Regions - Business")
       this.summary = regions.parseSummary(this.#textShardGroups);
+    else if (this.bank === "Chase - Business")
+      this.summary = chase.parseSummary(this.#textShardGroups);
   }
 
   parseDeposits() {
+    // Get the statement's year (for transaction dates)
+    const year = moment(this.period.start, "MM/DD/YYYY").format("YYYY");
+
     if (this.bank === "Bank of America - Business")
       this.deposits = bofa.parseDeposits(this.#textShardGroups);
     else if (this.bank === "Regions - Business")
-      this.deposits = regions.parseDeposits(
-        this.#textShardGroups,
-        // Get the statement's year (for transaction dates)
-        moment(this.period.start, "MM/DD/YYYY").format("YYYY")
-      );
+      this.deposits = regions.parseDeposits(this.#textShardGroups, year);
+    else if (this.bank === "Chase - Business")
+      this.deposits = chase.parseDeposits(this.#textShardGroups, year);
   }
 
   parseWithdrawals() {
+    // Get the statement's year (for transaction dates)
+    const year = moment(this.period.start, "MM/DD/YYYY").format("YYYY");
+
     if (this.bank === "Bank of America - Business")
       this.withdrawals = bofa.parseWithdrawals(this.#textShardGroups);
     else if (this.bank === "Regions - Business")
-      this.withdrawals = regions.parseWithdrawals(
-        this.#textShardGroups,
-        // Get the statement's year (for transaction dates)
-        moment(this.period.start, "MM/DD/YYYY").format("YYYY")
-      );
+      this.withdrawals = regions.parseWithdrawals(this.#textShardGroups, year);
+    else if (this.bank === "Chase - Business")
+      this.withdrawals = chase.parseWithdrawals(this.#textShardGroups, year);
   }
 
   // Check if the total number of deposits and withdrawals match reconcile with the summary's totals
