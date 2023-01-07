@@ -147,8 +147,11 @@ function matchDescription(
   const ratio = calcRatio(description, entryDescription.toUpperCase());
 
   // Use a threshold to determine if the entry is a "match"
-  if (ratio && ratio >= ratio_cutoff)
-    match = addMatch(match, entryDescription, ratio);
+  if (ratio && ratio >= ratio_cutoff) {
+    if (ratio == 1) {
+      match = addMatch(match, entryDescription, ratio, 999);
+    } else match = addMatch(match, entryDescription, ratio);
+  }
 
   // Add matches for "exact" words
   if (matchExactWords)
@@ -261,15 +264,16 @@ function addEntryWordMatches(
 function addMatch(
   match: LevenshteinAccountMatch,
   description: string,
-  ratio: number
+  ratio: number,
+  count = 1
 ): LevenshteinAccountMatch {
   match.entries.push({
     description,
     ratio,
-    count: 1,
+    count: count,
   });
-  match.stats.totalEntries += 1;
-  match.stats.averageRatio += ratio;
+  match.stats.totalEntries += count;
+  match.stats.averageRatio += ratio * count;
   return match;
 }
 
