@@ -481,7 +481,7 @@ function shortenDescription(description: string): string | undefined {
   // TODO: determine whether to keep this in production...
   const SHORTENED = shortened.toUpperCase();
   if (SHORTENED.startsWith("FLA DEPT REVENUE")) shortened = "FDOR";
-  else if (SHORTENED.startsWith("WESTERN UNION")) shortened = "WU";
+  // else if (SHORTENED.startsWith("WESTERN UNION")) shortened = "WU";
 
   return shortened !== description ? shortened : undefined;
 }

@@ -248,13 +248,27 @@ export default function CoderTable({
     const transaction = transactions[transactionIndex];
     if (!transaction?.selectionOverride) return;
 
-    const descriptionNoDigits = transaction.description.original.replace(
-      /\d/g,
-      ""
-    );
+    // const descriptionNoDigits = transaction.description.original.replace(
+    //   /\d/g,
+    //   ""
+    // );
+    // updatedCoder.results.transactions[transactionType] = transactions.map(
+    //   (t) => {
+    //     if (t.description.original.replace(/\d/g, "") === descriptionNoDigits) {
+    //       t.selectionOverride = transaction.selectionOverride;
+    //     }
+    //     return t;
+    //   }
+    // );
+
     updatedCoder.results.transactions[transactionType] = transactions.map(
       (t) => {
-        if (t.description.original.replace(/\d/g, "") === descriptionNoDigits) {
+        if (t.description.original === transaction.description.original) {
+          t.selectionOverride = transaction.selectionOverride;
+        } else if (
+          t.description.shortened &&
+          t.description.shortened === transaction.description.shortened
+        ) {
           t.selectionOverride = transaction.selectionOverride;
         }
         return t;
@@ -275,13 +289,27 @@ export default function CoderTable({
     const transaction = transactions[transactionIndex];
     if (!transaction?.selection) return;
 
-    const descriptionNoDigits = transaction.description.original.replace(
-      /\d/g,
-      ""
-    );
+    // const descriptionNoDigits = transaction.description.original.replace(
+    //   /\d/g,
+    //   ""
+    // );
+    // updatedCoder.results.transactions[transactionType] = transactions.map(
+    //   (t) => {
+    //     if (t.description.original.replace(/\d/g, "") === descriptionNoDigits) {
+    //       t.selection = transaction.selection;
+    //     }
+    //     return t;
+    //   }
+    // );
+
     updatedCoder.results.transactions[transactionType] = transactions.map(
       (t) => {
-        if (t.description.original.replace(/\d/g, "") === descriptionNoDigits) {
+        if (t.description.original === transaction.description.original) {
+          t.selection = transaction.selection;
+        } else if (
+          t.description.shortened &&
+          t.description.shortened === transaction.description.shortened
+        ) {
           t.selection = transaction.selection;
         }
         return t;
