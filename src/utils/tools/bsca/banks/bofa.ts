@@ -478,6 +478,10 @@ function shortenDescription(description: string): string | undefined {
       shortened = shortened.slice(14).trim();
   }
 
+  // Attempt to remove "Confirmation# 9219408141" from the end of shortened, where the confirmation number is dynamic and a random number of digits...
+  const CONFIRMATION_NUMBER_REGEX = / Confirmation# \d+$/;
+  shortened = shortened.replace(CONFIRMATION_NUMBER_REGEX, "");
+
   // TODO: determine whether to keep this in production...
   const SHORTENED = shortened.toUpperCase();
   if (SHORTENED.startsWith("FLA DEPT REVENUE")) shortened = "FDOR";
