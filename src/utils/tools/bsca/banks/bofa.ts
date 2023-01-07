@@ -477,6 +477,12 @@ function shortenDescription(description: string): string | undefined {
     if (checkcardNumber.length === 4 && !isNaN(parseInt(checkcardNumber)))
       shortened = shortened.slice(14).trim();
   }
+  // Attempt to replace "Online Banking transfer to " from the start of shortened, with "TRANSFER TO"
+  const ONLINE_BANKING_TRANSFER_TO_REGEX = /^Online Banking transfer to /;
+  shortened = shortened.replace(
+    ONLINE_BANKING_TRANSFER_TO_REGEX,
+    "TRANSFER TO "
+  );
 
   // Attempt to remove "Confirmation# 9219408141" from the end of shortened, where the confirmation number is dynamic and a random number of digits...
   const CONFIRMATION_NUMBER_REGEX = / Confirmation# \d+$/;
