@@ -68,18 +68,16 @@ function matchDescriptions(
             // Cap the length of the original description to 16 characters
             .substring(0, 16)
             .toUpperCase(),
-          shortenedDescription = transaction.description.shortened
-            // Cap the length of the shortened description to 16 characters
-            ?.substring(0, 16)
-            .toUpperCase();
+          shortenedDescription =
+            transaction.description.shortened?.toUpperCase();
 
-        match = matchDescription(match, entry.description, description);
         if (shortenedDescription)
           match = matchDescription(
             match,
             entry.description,
             shortenedDescription
           );
+        else match = matchDescription(match, entry.description, description);
       });
 
       // Sort the entries by ratio and by the number of times they were matched
@@ -155,6 +153,7 @@ function matchDescription(
   // Add matches for "exact" words
   if (matchExactWords)
     match = addWordMatches(match, entryDescription, description);
+
   return match;
 }
 
@@ -188,6 +187,35 @@ function addWordMatches(
       match = addMatch(match, entryDescription, ratio);
     }
   });
+
+  // Now, let's do the same but only for account numbers (last 4 digits)
+  description.split(" ").forEach((word) => {
+    // Remove commas and periods from the word
+    word = word.replace(/[,\.]/g, "");
+
+    // Check if it is the last 4 digits of an account number
+    word = word.replace("#", "");
+    if (!word.match(/^\d{4}$/)) return;
+
+    // Attempt to add a match for each word in the entry description as well instead of against the entire entry description
+    match = addEntryWordMatches(match, entryDescription, word);
+
+    // Calculate a ratio for the word against the entry description
+    const ratio = calcRatio(word, entryDescription.toUpperCase());
+
+    // Use a threshold to determine if the entry is a "match" (expierment with 0.85, 0.9, etc.)
+    if (ratio && ratio >= 0.85) {
+      // Check if the entry description was previously matched to this transaction
+      const matchIndex = getMatchIndex(match, entryDescription);
+      if (matchIndex != -1) {
+        match = addMatchCount(match, matchIndex);
+        return;
+      }
+
+      match = addMatch(match, entryDescription, ratio);
+    }
+  });
+
   return match;
 }
 
@@ -215,8 +243,16 @@ function addEntryWordMatches(
           return;
         }
 
-        // TODO: determine whether to change the ratio to 0 for these "exact" entry description word to transaction description word matches
-        match = addMatch(match, entryDescription, ratio);
+        // TODO: determine whether to override the ratio (to 0 or 0.35) for these "exact" entry description word to transaction description word matches
+        let exactWordFinalRatio = 0.35; // ratio;
+        // Check if the word and entryWord are 4 digits using regex, if so, override the ratio (meaning this most likely the last 4 of an account number)
+        if (
+          word.match(/^\d{4}$/) &&
+          entryWord.replace("#", "").match(/^\d{4}$/)
+        )
+          exactWordFinalRatio = 0.95;
+
+        match = addMatch(match, entryDescription, exactWordFinalRatio);
       }
     });
   return match;

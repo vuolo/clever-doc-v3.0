@@ -483,6 +483,12 @@ function shortenDescription(description: string): string | undefined {
     ONLINE_BANKING_TRANSFER_TO_REGEX,
     "TRANSFER TO "
   );
+  // Attempt to replace "Online Banking transfer from " from the start of shortened, with "TRANSFER FROM"
+  const ONLINE_BANKING_TRANSFER_FROM_REGEX = /^Online Banking transfer from /;
+  shortened = shortened.replace(
+    ONLINE_BANKING_TRANSFER_FROM_REGEX,
+    "TRANSFER FROM "
+  );
 
   // Attempt to remove "Online Banking Transfer Conf# jicq53rao;" from the start of shortened, where the confirmation number is dynamic and a random string...
   const ONLINE_BANKING_TRANSFER_CONF_REGEX =
@@ -498,5 +504,5 @@ function shortenDescription(description: string): string | undefined {
   if (SHORTENED.startsWith("FLA DEPT REVENUE")) shortened = "FDOR";
   // else if (SHORTENED.startsWith("WESTERN UNION")) shortened = "WU";
 
-  return shortened !== description ? shortened.trim() : undefined;
+  return shortened !== description ? shortened.trim().toUpperCase() : undefined;
 }
