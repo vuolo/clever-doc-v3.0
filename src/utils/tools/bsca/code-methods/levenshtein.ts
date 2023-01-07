@@ -167,6 +167,9 @@ function addWordMatches(
   const lettersOnly = description.replace(/[^a-z\s]/gi, "");
   const words = lettersOnly.split(" ");
   words.forEach((word) => {
+    // Remove commas and periods from the word
+    word = word.replace(/[,\.]/g, "");
+
     // Attempt to add a match for each word in the entry description as well instead of against the entire entry description
     match = addEntryWordMatches(match, entryDescription, word);
 
@@ -197,6 +200,9 @@ function addEntryWordMatches(
     .toUpperCase()
     .split(" ")
     .forEach((entryWord) => {
+      // Remove commas and periods from the word
+      entryWord = entryWord.replace(/[,\.]/g, "");
+
       // Calculate a ratio for the word
       const ratio = calcRatio(word, entryWord);
 
