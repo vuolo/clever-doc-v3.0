@@ -484,6 +484,11 @@ function shortenDescription(description: string): string | undefined {
     "TRANSFER TO "
   );
 
+  // Attempt to remove "Online Banking Transfer Conf# jicq53rao;" from the start of shortened, where the confirmation number is dynamic and a random string...
+  const ONLINE_BANKING_TRANSFER_CONF_REGEX =
+    /^Online Banking Transfer Conf# [a-z0-9]+; /;
+  shortened = shortened.replace(ONLINE_BANKING_TRANSFER_CONF_REGEX, "");
+
   // Attempt to remove "Confirmation# 9219408141" from the end of shortened, where the confirmation number is dynamic and a random number of digits...
   const CONFIRMATION_NUMBER_REGEX = / Confirmation# \d+$/;
   shortened = shortened.replace(CONFIRMATION_NUMBER_REGEX, "");
