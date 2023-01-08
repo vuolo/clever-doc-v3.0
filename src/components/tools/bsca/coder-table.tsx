@@ -277,13 +277,15 @@ export default function CoderTable({
           t.selectionOverride = transaction.selectionOverride;
         }
 
-        // Also check if the shortened matches, but only if it doesnt detect a sequence of 4 digits surrounded by a space (representing an account number's last 4 digits)
+        // Also update all like transactions, only if no account number is detected
         else if (
           t.description.shortened &&
           !/\s\d{4}\s/.test(t.description.shortened) &&
           shortenedNoDigits == t.description.shortened.replace(/\d/g, "")
         ) {
-          t.selectionOverride = transaction.selectionOverride;
+          const lastNumber = t.description.shortened.match(/\d+$/);
+          if (lastNumber && lastNumber[0].length > 4)
+            t.selectionOverride = transaction.selectionOverride;
         }
         return t;
       }
@@ -332,13 +334,15 @@ export default function CoderTable({
           t.selection = transaction.selection;
         }
 
-        // Also check if the shortened matches, but only if it doesnt detect a sequence of 4 digits surrounded by a space (representing an account number's last 4 digits)
+        // Also update all like transactions, only if no account number is detected
         else if (
           t.description.shortened &&
           !/\s\d{4}\s/.test(t.description.shortened) &&
           shortenedNoDigits == t.description.shortened.replace(/\d/g, "")
         ) {
-          t.selection = transaction.selection;
+          const lastNumber = t.description.shortened.match(/\d+$/);
+          if (lastNumber && lastNumber[0].length > 4)
+            t.selection = transaction.selection;
         }
         return t;
       }
