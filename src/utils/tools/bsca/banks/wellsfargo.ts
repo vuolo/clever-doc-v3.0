@@ -15,9 +15,12 @@ import {
   isBoundingPolyWithinRange,
   strip,
 } from "@/utils/ocr";
+import { emptyTransaction } from "../BankStatement";
 
+const DATE_REGEX = /^\d{1,2}\/\d{1,2}/;
 const PERIOD_START_REGEX = /Beginning balance on (\d+\/\d+)/;
 const PERIOD_END_REGEX = /(\w+ \d{1,2}, \d{4})/;
+const AMOUNT_REGEX = /-?\s?\d{1,3}(,\d{3})*\.\d{2}/;
 
 export function isBank(textShardGroups: TextShardGroup[][]): boolean {
   const firstPage = textShardGroups[0];
@@ -164,4 +167,297 @@ export function parsePeriod(textShardGroups: TextShardGroup[][]): Period {
   }
 
   return period;
+}
+
+export function parseSummary(
+  textShardGroups: TextShardGroup[][]
+): BankStatementSummary {
+  const summary = {
+    balance: {
+      begin: -1,
+      end: -1,
+    },
+    totals: {
+      deposits: -1,
+      withdrawals: -1,
+    },
+  } as BankStatementSummary;
+
+  const firstPage = textShardGroups[0];
+  if (!firstPage) return summary;
+
+  let foundAccountSummary = false;
+  for (const textShardGroup of firstPage) {
+    for (const textShard of textShardGroup.textShards) {
+      // Account Summary
+      const shardText = strip(textShard.text);
+      if (shardText === "Statement period activity summary")
+        foundAccountSummary = true;
+      if (!foundAccountSummary) continue;
+
+      // Beginning Balance
+      if (summary.balance.begin == -1) {
+        const shardText = strip(textShard.text);
+        if (shardText.includes("Beginning balance on ")) {
+          for (const shard of textShardGroup.textShards) {
+            const shardText = strip(shard.text);
+
+            if (shardText.startsWith("$")) {
+              summary.balance.begin = parseFloat(
+                shardText.replace("$", "").replace(/,/g, "")
+              );
+              break;
+            }
+          }
+        }
+      }
+
+      // Ending Balance
+      if (summary.balance.end == -1) {
+        const shardText = strip(textShard.text);
+        if (shardText.includes("Ending balance on ")) {
+          for (const shard of textShardGroup.textShards) {
+            const shardText = strip(shard.text);
+
+            if (shardText.startsWith("$")) {
+              summary.balance.end = parseFloat(
+                shardText.replace("$", "").replace(/,/g, "")
+              );
+              break;
+            }
+          }
+        }
+      }
+
+      // Deposits
+      if (summary.totals.deposits == -1) {
+        const shardText = strip(textShard.text);
+        if (shardText.includes("Deposits/Credits")) {
+          for (const shard of textShardGroup.textShards) {
+            const shardText = strip(shard.text);
+
+            const result = AMOUNT_REGEX.exec(shardText);
+            if (!result || !result[0]) continue;
+
+            summary.totals.deposits = parseFloat(
+              result[0].replace(/,/g, "").replace(" ", "")
+            );
+            break;
+          }
+        }
+      }
+
+      // Withdrawals
+      if (summary.totals.withdrawals == -1) {
+        const shardText = strip(textShard.text);
+        if (shardText.includes("Withdrawals/Debits")) {
+          for (const shard of textShardGroup.textShards) {
+            const shardText = strip(shard.text);
+
+            const result = AMOUNT_REGEX.exec(shardText);
+            if (!result || !result[0]) continue;
+
+            summary.totals.withdrawals = parseFloat(
+              result[0].replace(/,/g, "").replace(" ", "")
+            );
+            break;
+          }
+        }
+      }
+    }
+  }
+
+  return summary;
+}
+
+export function parseDeposits(
+  textShardGroups: TextShardGroup[][],
+  year: string
+): Transaction[] {
+  return parseTransactions(textShardGroups, "deposits", year);
+}
+
+export function parseWithdrawals(
+  textShardGroups: TextShardGroup[][],
+  year: string
+): Transaction[] {
+  return parseTransactions(textShardGroups, "withdrawals", year);
+}
+
+function parseTransactions(
+  textShardGroups: TextShardGroup[][],
+  type: "deposits" | "withdrawals",
+  year: string
+): Transaction[] {
+  const transactions = [] as Transaction[];
+  if (type !== "deposits" && type !== "withdrawals") return transactions;
+
+  // Transactions start on page 2 (index 1) for Wells Fargo bank statements
+  for (const page of textShardGroups.slice(1)) {
+    let foundTable = false;
+    for (const textShardGroup of page) {
+      const curTransaction = emptyTransaction();
+      for (const textShard of textShardGroup.textShards) {
+        if (!foundTable) {
+          const shardText = strip(textShard.text);
+
+          if (shardText.includes("Transaction history")) {
+            foundTable = true;
+            continue; // Move to next line...
+          }
+        }
+        if (!foundTable) continue;
+
+        // Look for the totals
+        const shardText = strip(textShard.text);
+        if (shardText.includes("Ending balance on")) return transactions;
+
+        const lineText = getGroupedShardTexts(textShardGroup);
+        const joinedLineText = lineText.join(" ");
+
+        // Date
+        if (!curTransaction.date) {
+          const dateText = joinedLineText;
+          const dateMatch = dateText?.match(DATE_REGEX);
+          if (dateText && dateMatch && dateMatch.index !== undefined) {
+            let date = dateMatch[0];
+            date += `/${year.slice(2)}`;
+            const dateFormatted = moment(date, "M/D/YY").format("MM/DD/YYYY");
+
+            curTransaction.date = dateFormatted;
+          }
+        }
+
+        // Description
+        // TODO: possibly include multi-line descriptions
+        if (!curTransaction.description.original) {
+          if (
+            isBoundingPolyWithinRange(
+              textShard.boundingPoly.normalizedVertices,
+              "x",
+              0.23,
+              0.64
+            )
+          ) {
+            const descriptionText = shardText;
+            if (descriptionText) {
+              curTransaction.description.original = descriptionText;
+              curTransaction.description.shortened =
+                shortenDescription(descriptionText);
+            }
+          }
+        }
+
+        // Amount
+        if (curTransaction.amount === -1) {
+          if (
+            type === "deposits"
+              ? isBoundingPolyWithinRange(
+                  textShard.boundingPoly.normalizedVertices,
+                  "x",
+                  0.63,
+                  0.73
+                )
+              : isBoundingPolyWithinRange(
+                  textShard.boundingPoly.normalizedVertices,
+                  "x",
+                  0.73,
+                  0.83
+                )
+          ) {
+            const result = AMOUNT_REGEX.exec(shardText);
+            if (!result || !result[0]) continue;
+
+            curTransaction.amount =
+              parseFloat(result[0].replace(/,/g, "")) *
+              (type === "withdrawals" ? -1 : 1);
+
+            if (curTransaction.date && curTransaction.description.original)
+              transactions.push(curTransaction);
+            break;
+          }
+        }
+      }
+    }
+  }
+
+  return transactions;
+}
+
+function shortenDescription(description: string): string | undefined {
+  let shortened = description;
+  // Attempt to remove all contents before and including " authorized on 08/25" from shortened, where the date dynamic but always 2 digits for month and day
+  const authorizedOnMatch = shortened.match(
+    new RegExp(` authorized on [0-9]{2}/[0-9]{2}`, "i")
+  );
+  if (authorizedOnMatch && authorizedOnMatch.index !== undefined) {
+    shortened = shortened.slice(
+      authorizedOnMatch.index + authorizedOnMatch[0].length
+    );
+  }
+  const atmCheckMatch = shortened.match(
+    new RegExp(`ATM Check Deposit on [0-9]{2}/[0-9]{2}`, "i")
+  );
+  if (atmCheckMatch && atmCheckMatch.index !== undefined) {
+    shortened = shortened.slice(atmCheckMatch.index + atmCheckMatch[0].length);
+  }
+
+  // Attempt to replace "Online Transfer To " from the start of shortened, with "TRANSFER TO"
+  const ONLINE_BANKING_TRANSFER_TO_REGEX = /^Online Transfer To /;
+  shortened = shortened.replace(
+    ONLINE_BANKING_TRANSFER_TO_REGEX,
+    "TRANSFER TO "
+  );
+  // Attempt to replace "Online Transfer From " from the start of shortened, with "TRANSFER FROM"
+  const ONLINE_BANKING_TRANSFER_FROM_REGEX = /^Online Transfer From /;
+  shortened = shortened.replace(
+    ONLINE_BANKING_TRANSFER_FROM_REGEX,
+    "TRANSFER FROM "
+  );
+
+  // Attempt to replace "Zelle to " from the start of shortened, with "ZELLE TO "
+  const ZELLE_TO_REGEX = /^Zelle to /;
+  if (ZELLE_TO_REGEX.test(shortened)) {
+    // Replace all contents starting at " on 09/01" to the end from shortened, where the date dynamic but always 2 digits for month and day
+    const zelleOnMatch = shortened.match(
+      new RegExp(` on [0-9]{2}/[0-9]{2}`, "i")
+    );
+    if (zelleOnMatch && zelleOnMatch.index !== undefined)
+      shortened = shortened.slice(0, zelleOnMatch.index);
+    shortened = shortened.replace(ZELLE_TO_REGEX, "ZELLE TO ");
+  }
+
+  // Attempt to replace "Zelle from " from the start of shortened, with "ZELLE FROM "
+  const ZELLE_FROM_REGEX = /^Zelle from /;
+  if (ZELLE_FROM_REGEX.test(shortened)) {
+    // Replace all contents starting at " on 09/01" to the end from shortened, where the date dynamic but always 2 digits for month and day
+    const zelleOnMatch = shortened.match(
+      new RegExp(` on [0-9]{2}/[0-9]{2}`, "i")
+    );
+    if (zelleOnMatch && zelleOnMatch.index !== undefined)
+      shortened = shortened.slice(0, zelleOnMatch.index);
+    shortened = shortened.replace(ZELLE_FROM_REGEX, "ZELLE FROM ");
+  }
+
+  // Mark returns
+  if (description.includes("Return authorized"))
+    shortened = shortened.trim() + " RETURN";
+
+  // Add TRANSFERS to shortened if not yet added
+  if (
+    description.includes("Transfer authorized") &&
+    !shortened.includes("TRANSFER")
+  )
+    shortened = "TRANSFER " + shortened.trim();
+
+  // Make sure to mark whenever a transaction is an ATM Check Deposit
+  if (description.includes("ATM Check") && !shortened.includes("ATM CHECK"))
+    shortened = "ATM CHECK " + shortened.trim();
+
+  // TODO: determine whether to keep this in production...
+  const SHORTENED = shortened.toUpperCase();
+  if (SHORTENED.startsWith("FLA DEPT REVENUE")) shortened = "FDOR";
+  // else if (SHORTENED.startsWith("WESTERN UNION")) shortened = "WU";
+
+  return shortened !== description ? shortened.trim().toUpperCase() : undefined;
 }

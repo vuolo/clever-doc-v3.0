@@ -442,5 +442,5 @@ function shortenDescription(description: string): string | undefined {
   if (SHORTENED.startsWith("FLA DEPT REVENUE")) shortened = "FDOR";
   // else if (SHORTENED.startsWith("WESTERN UNION")) shortened = "WU";
 
-  return shortened !== description ? shortened : undefined;
+  return shortened !== description ? shortened.trim().toUpperCase() : undefined;
 }

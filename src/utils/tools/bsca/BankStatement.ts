@@ -117,8 +117,8 @@ export class BankStatement {
       this.summary = regions.parseSummary(this.#textShardGroups);
     else if (this.bank === "Chase - Business")
       this.summary = chase.parseSummary(this.#textShardGroups);
-    // else if (this.bank === "Wells Fargo - Business")
-    //   this.summary = wellsfargo.parseSummary(this.#textShardGroups);
+    else if (this.bank === "Wells Fargo - Business")
+      this.summary = wellsfargo.parseSummary(this.#textShardGroups);
   }
 
   parseDeposits() {
@@ -136,8 +136,8 @@ export class BankStatement {
       this.deposits = regions.parseDeposits(this.#textShardGroups, year);
     else if (this.bank === "Chase - Business")
       this.deposits = chase.parseDeposits(this.#textShardGroups, year);
-    // else if (this.bank === "Wells Fargo - Business")
-    //   this.deposits = wellsfargo.parseDeposits(this.#textShardGroups, year);
+    else if (this.bank === "Wells Fargo - Business")
+      this.deposits = wellsfargo.parseDeposits(this.#textShardGroups, year);
   }
 
   parseWithdrawals() {
@@ -155,11 +155,11 @@ export class BankStatement {
       this.withdrawals = regions.parseWithdrawals(this.#textShardGroups, year);
     else if (this.bank === "Chase - Business")
       this.withdrawals = chase.parseWithdrawals(this.#textShardGroups, year);
-    // else if (this.bank === "Wells Fargo - Business")
-    //   this.withdrawals = wellsfargo.parseWithdrawals(
-    //     this.#textShardGroups,
-    //     year
-    //   );
+    else if (this.bank === "Wells Fargo - Business")
+      this.withdrawals = wellsfargo.parseWithdrawals(
+        this.#textShardGroups,
+        year
+      );
   }
 
   // Check if the total number of deposits and withdrawals match reconcile with the summary's totals
