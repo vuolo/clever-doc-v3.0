@@ -261,6 +261,11 @@ export default function CoderTable({
     //   }
     // );
 
+    const shortenedNoDigits = transaction.description.shortened?.replace(
+      /\d/g,
+      ""
+    );
+
     updatedCoder.results.transactions[transactionType] = transactions.map(
       (t) => {
         if (t.description.original === transaction.description.original) {
@@ -268,6 +273,15 @@ export default function CoderTable({
         } else if (
           t.description.shortened &&
           t.description.shortened === transaction.description.shortened
+        ) {
+          t.selectionOverride = transaction.selectionOverride;
+        }
+
+        // Also check if the shortened matches, but only if it doesnt detect a sequence of 4 digits surrounded by a space (representing an account number's last 4 digits)
+        else if (
+          t.description.shortened &&
+          !/\s\d{4}\s/.test(t.description.shortened) &&
+          shortenedNoDigits == t.description.shortened.replace(/\d/g, "")
         ) {
           t.selectionOverride = transaction.selectionOverride;
         }
@@ -302,6 +316,11 @@ export default function CoderTable({
     //   }
     // );
 
+    const shortenedNoDigits = transaction.description.shortened?.replace(
+      /\d/g,
+      ""
+    );
+
     updatedCoder.results.transactions[transactionType] = transactions.map(
       (t) => {
         if (t.description.original === transaction.description.original) {
@@ -309,6 +328,15 @@ export default function CoderTable({
         } else if (
           t.description.shortened &&
           t.description.shortened === transaction.description.shortened
+        ) {
+          t.selection = transaction.selection;
+        }
+
+        // Also check if the shortened matches, but only if it doesnt detect a sequence of 4 digits surrounded by a space (representing an account number's last 4 digits)
+        else if (
+          t.description.shortened &&
+          !/\s\d{4}\s/.test(t.description.shortened) &&
+          shortenedNoDigits == t.description.shortened.replace(/\d/g, "")
         ) {
           t.selection = transaction.selection;
         }
