@@ -335,7 +335,7 @@ function parseTransactions(
             isBoundingPolyWithinRange(
               textShard.boundingPoly.normalizedVertices,
               "x",
-              0.23,
+              0.17,
               0.64
             )
           ) {
@@ -365,8 +365,16 @@ function parseTransactions(
                   0.83
                 )
           ) {
-            const result = AMOUNT_REGEX.exec(shardText);
-            if (!result || !result[0]) continue;
+            let result = AMOUNT_REGEX.exec(shardText);
+            if (!result || !result[0]) {
+              // Attempt to fix broken amounts (no decimal places) before continuing
+              if (!shardText.endsWith(".")) continue;
+              const fixedAmount = shardText.endsWith(".")
+                ? shardText + "00"
+                : shardText;
+              result = AMOUNT_REGEX.exec(fixedAmount);
+              if (!result || !result[0]) continue;
+            }
 
             curTransaction.amount =
               parseFloat(result[0].replace(/,/g, "")) *
@@ -374,6 +382,16 @@ function parseTransactions(
 
             if (curTransaction.date && curTransaction.description.original)
               transactions.push(curTransaction);
+            else {
+              // Override the date check and as long as there's a description, just push it through
+              if (curTransaction.description.original)
+                transactions.push(curTransaction);
+              else {
+                curTransaction.description.original =
+                  "UNKNOWN - PLEASE CHECK MANUALLY";
+                transactions.push(curTransaction);
+              }
+            }
             break;
           }
         }

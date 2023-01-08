@@ -425,6 +425,16 @@ function parseTransactions(
 
           if (curTransaction.date && curTransaction.description.original)
             transactions.push(curTransaction);
+          else {
+            // Override the date check and as long as there's a description, just push it through
+            if (curTransaction.description.original)
+              transactions.push(curTransaction);
+            else {
+              curTransaction.description.original =
+                "UNKNOWN - PLEASE CHECK MANUALLY";
+              transactions.push(curTransaction);
+            }
+          }
           break;
         }
       }
