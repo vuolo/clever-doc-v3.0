@@ -206,7 +206,8 @@ export function parseSummary(
       ) {
         const shardText = strip(textShard.text);
 
-        if (shardText === "CHECKING SUMMARY") foundAccountSummary = true;
+        if (shardText === "CHECKING SUMMARY" || shardText === "SAVINGS SUMMARY")
+          foundAccountSummary = true;
       }
       if (!foundAccountSummary) continue;
 
