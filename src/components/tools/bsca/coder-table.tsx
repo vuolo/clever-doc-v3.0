@@ -265,6 +265,10 @@ export default function CoderTable({
       /\d/g,
       ""
     );
+    const originalNoDigits = transaction.description.original.replace(
+      /\d/g,
+      ""
+    );
 
     updatedCoder.results.transactions[transactionType] = transactions.map(
       (t) => {
@@ -286,7 +290,15 @@ export default function CoderTable({
           const lastNumber = t.description.shortened.match(/\d+$/);
           if (lastNumber && lastNumber[0].length > 4)
             t.selectionOverride = transaction.selectionOverride;
+        } else if (
+          !/\s\d{4}\s/.test(t.description.original) &&
+          originalNoDigits == t.description.original.replace(/\d/g, "")
+        ) {
+          const lastNumber = t.description.original.match(/\d+$/);
+          if (lastNumber && lastNumber[0].length > 4)
+            t.selectionOverride = transaction.selectionOverride;
         }
+
         return t;
       }
     );
@@ -322,6 +334,10 @@ export default function CoderTable({
       /\d/g,
       ""
     );
+    const originalNoDigits = transaction.description.original.replace(
+      /\d/g,
+      ""
+    );
 
     updatedCoder.results.transactions[transactionType] = transactions.map(
       (t) => {
@@ -343,7 +359,15 @@ export default function CoderTable({
           const lastNumber = t.description.shortened.match(/\d+$/);
           if (lastNumber && lastNumber[0].length > 4)
             t.selection = transaction.selection;
+        } else if (
+          !/\s\d{4}\s/.test(t.description.original) &&
+          originalNoDigits == t.description.original.replace(/\d/g, "")
+        ) {
+          const lastNumber = t.description.original.match(/\d+$/);
+          if (lastNumber && lastNumber[0].length > 4)
+            t.selection = transaction.selection;
         }
+
         return t;
       }
     );
