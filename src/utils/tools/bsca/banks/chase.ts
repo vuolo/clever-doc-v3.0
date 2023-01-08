@@ -198,8 +198,10 @@ export function parseSummary(
         isBoundingPolyWithinRange(
           textShard.boundingPoly.normalizedVertices,
           "y",
-          0.62,
-          0.655
+          0.35,
+          0.8
+          // 0.62,
+          // 0.655
         )
       ) {
         const shardText = strip(textShard.text);
