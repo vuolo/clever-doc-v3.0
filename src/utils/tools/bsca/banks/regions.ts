@@ -452,7 +452,10 @@ function shortenDescription(description: string): string | undefined {
   if (SHORTENED.startsWith("FLA DEPT REVENUE"))
     shortened = SHORTENED.replace("FLA DEPT REVENUE", "FDOR");
   else if (SHORTENED.startsWith("WESTERN UNION"))
-    shortened = SHORTENED.replace("WESTERN UNION", "WU");
+    shortened = SHORTENED.replace("WESTERN UNION", "WU").replaceAll(
+      "WU WU",
+      "WU"
+    );
 
   return shortened !== description ? shortened.trim().toUpperCase() : undefined;
 }
