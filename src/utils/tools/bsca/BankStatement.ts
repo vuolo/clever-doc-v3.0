@@ -20,8 +20,8 @@ import { getTextShardsAsLines } from "@/utils/ocr";
 
 export class BankStatement {
   readonly class = "BankStatement";
-  readonly #textShards: TextShard[][];
-  readonly #textShardGroups: TextShardGroup[][];
+  readonly #textShards: TextShard[][] = [];
+  readonly #textShardGroups: TextShardGroup[][] = [];
   bank?: string;
   company!: Company;
   account!: BankAccount;
@@ -33,7 +33,14 @@ export class BankStatement {
   checks!: Check[];
   file?: StoredFile;
 
-  constructor(textShards: TextShard[][]) {
+  constructor(textShards?: TextShard[][], transactions?: Transaction[]) {
+    // This was implemented to create a sanmple
+    if (!textShards) {
+      this.fillWithTestData();
+      this.withdrawals = transactions || [];
+      return;
+    }
+
     this.#textShards = textShards;
     this.#textShardGroups = getTextShardsAsLines(
       textShards

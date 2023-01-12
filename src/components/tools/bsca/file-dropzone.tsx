@@ -8,7 +8,15 @@ import {
 import { useSession } from "next-auth/react";
 import { type FileRejection, useDropzone } from "react-dropzone";
 import toast from "react-hot-toast";
-import { FilePlus2, FileX2, Link, Link2, Unlink2, Wand2 } from "lucide-react";
+import {
+  FilePlus2,
+  FileX2,
+  Link,
+  Link2,
+  Loader2,
+  Unlink2,
+  Wand2,
+} from "lucide-react";
 
 // PLAID INTEGRATION START
 import { usePlaidLink } from "react-plaid-link";
@@ -47,6 +55,7 @@ type Props = {
 export default function FileDropzone({ codeTransactions }: Props): JSX.Element {
   // PLAID INTEGRATION START
   const [refetchPlaid, setRefetchPlaid] = useState([false]);
+  const [plaidLinked, setPlaidLinked] = useState(false);
   const [token, setToken] = useState(null);
 
   useEffect(() => {
@@ -72,6 +81,7 @@ export default function FileDropzone({ codeTransactions }: Props): JSX.Element {
     // Router.push('/dash');
     console.log("SUCCESSFULLY LINKED PLAID ACCOUNT!");
     setRefetchPlaid([true]);
+    setPlaidLinked(true);
   }, []);
 
   const { open, ready } = usePlaidLink({
@@ -85,14 +95,20 @@ export default function FileDropzone({ codeTransactions }: Props): JSX.Element {
     });
     setRefetchPlaid([false]);
     getPlaidTransactions();
+    window.location.reload();
   };
 
   const getPlaidTransactions = async () => {
     const response = await fetch("/api/plaid/get-transactions", {
       method: "GET",
     });
+    if (response.status == 500) {
+      getPlaidTransactions();
+      return;
+    }
     const { transactions } = await response.json();
 
+    setPlaidLinked(true);
     setPlaidTransactions(transactions);
   };
 
@@ -342,6 +358,15 @@ export default function FileDropzone({ codeTransactions }: Props): JSX.Element {
                   )
                     return true;
 
+                  // If there is a plaid account linked, we don't need to check for the Bank Statement... for now during experimental stage
+                  if (
+                    storedFiles.filter((f) =>
+                      f.structure.startsWith("General Ledger")
+                    ).length == 1 &&
+                    plaidTransactions
+                  )
+                    return false;
+
                   // Check if there is only one file with a structure starting with "General Ledger" and at least on "Bank Statement"
                   return (
                     storedFiles.filter((f) =>
@@ -373,25 +398,36 @@ export default function FileDropzone({ codeTransactions }: Props): JSX.Element {
 
       {/* Experimental feature: Plaid integration START */}
       <br />
-      <div className="container flex flex-col items-center justify-center rounded-md border-2 bg-mono-50 p-4">
-        {plaidTransactions ? (
+      <div className="container flex w-auto flex-col items-center justify-center rounded-md border-2 bg-mono-50 px-8 py-6">
+        {plaidTransactions || plaidLinked ? (
           <>
             <h3 className="text-lg font-extrabold">
               Your bank is currently linked with Plaid.
             </h3>
             <p className="text-md text-center"></p>
             <br />
-            <button
-              onClick={() => unlinkPlaid()}
-              disabled={!ready}
-              className="relative inline-flex cursor-pointer items-center rounded-md border border-transparent bg-red-600 px-6 py-2 text-sm font-medium text-white shadow-md hover:bg-red-500 focus:outline-none focus:ring-2 focus:ring-mono-500 focus:ring-offset-2"
-            >
-              <Unlink2 size={20} className="mr-2" />
-              <span>Unlink Account</span>
-            </button>
-            {/* Test: Raw data view */}
-            <br />
-            <code>{JSON.stringify(plaidTransactions, null, 2)}</code>
+            {plaidTransactions && plaidLinked ? (
+              <>
+                <button
+                  onClick={() => unlinkPlaid()}
+                  disabled={!ready}
+                  className="relative inline-flex cursor-pointer items-center rounded-md border border-transparent bg-red-600 px-6 py-2 text-sm font-medium text-white shadow-md hover:bg-red-500 focus:outline-none focus:ring-2 focus:ring-mono-500 focus:ring-offset-2"
+                >
+                  <Unlink2 size={20} className="mr-2" />
+                  <span>Unlink Account</span>
+                </button>
+                {/* Test Only: Raw data view */}
+                {/* <br />
+                <code>{JSON.stringify(plaidTransactions, null, 2)}</code> */}
+              </>
+            ) : (
+              <>
+                <div className="mb-2 flex space-x-2">
+                  <Loader2 className="animate-spin" />
+                  <p>Loading...</p>
+                </div>
+              </>
+            )}
           </>
         ) : (
           <>

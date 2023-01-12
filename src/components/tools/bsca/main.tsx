@@ -6,8 +6,11 @@ import FileDropzone from "@/components/tools/bsca/file-dropzone";
 import FileSidebar from "@/components/tools/bsca/file-sidebar";
 import type { StoredFile } from "@/types/misc";
 import { Coder } from "@/utils/tools/bsca/Coder";
-import type { BankStatement } from "@/utils/tools/bsca/BankStatement";
+import { BankStatement } from "@/utils/tools/bsca/BankStatement";
 import type { GeneralLedger } from "@/utils/tools/bsca/GeneralLedger";
+import { type Transaction as PlaidTransaction } from "plaid";
+import { type Transaction } from "@/types/tools/bsca/bank-statement";
+import moment from "moment";
 
 export default function Main(): JSX.Element {
   const [codeProgress, setCodeProgress] = useState(0);
@@ -29,8 +32,53 @@ export default function Main(): JSX.Element {
     );
 
     if (!generalLedgerFile) throw new Error("No general ledger file found");
-    if (!bankStatementFiles.length)
-      throw new Error("No bank statement files found");
+    if (!bankStatementFiles.length) {
+      const plaidTransactions = await getPlaidTransactions();
+
+      if (!plaidTransactions || !plaidTransactions.length)
+        throw new Error("No bank statement files found");
+
+      // Convert the plaid transactions to our definiton of Transaction[]
+      const transactions = plaidTransactions.map(
+        (transaction: PlaidTransaction) => {
+          return {
+            date: moment(transaction.date, "YYYY-MM-DD").format("MM/DD/YYYY"),
+            description: {
+              original: transaction.name,
+            },
+            amount: transaction.amount,
+          } as Transaction;
+        }
+      );
+
+      // Create a new Bank Statement & pass the transactions
+      const bankStatement = new BankStatement(undefined, transactions);
+
+      // Duplicate the contents of loop at the bottom of this function but using the single bank statement
+      for (let i = 0; i < 1; i++) {
+        const coder = new Coder(
+          bankStatement,
+          generalLedgerFile.extractedStructure as GeneralLedger
+        );
+
+        // Visualize the coding process
+        const progress = Math.round(((i + 1) / 1) * 100);
+        setCodeProgress(progress);
+        await sleep(1);
+
+        // Push the resultant coder to the coders array
+        setCoders((coders) => [...coders, coder]);
+
+        console.log(progress + "%");
+        console.log(coder);
+      }
+
+      await sleep(1000);
+      setCodeProgress(0);
+      setIsCoding(false);
+
+      return;
+    }
 
     for (let i = 0; i < bankStatementFiles.length; i++) {
       const bankStatementFile = bankStatementFiles[i];
@@ -55,6 +103,21 @@ export default function Main(): JSX.Element {
     setCodeProgress(0);
     setIsCoding(false);
   }
+
+  // PLAID IMPLEMENTATION STARTS HERE
+  const getPlaidTransactions = async () => {
+    const response = await fetch("/api/plaid/get-transactions", {
+      method: "GET",
+    });
+    if (response.status == 500) {
+      // getPlaidTransactions();
+      return;
+    }
+    const { transactions } = await response.json();
+
+    return transactions;
+  };
+  // PLAID IMPLEMENTATION ENDS HERE
 
   return (
     <>
