@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import ProgressBar from "@ramonak/react-progress-bar";
 
 import CoderResults from "@/components/tools/bsca/coder-results";

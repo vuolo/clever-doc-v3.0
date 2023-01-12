@@ -2,6 +2,7 @@ import { router } from "../trpc";
 import { authRouter } from "./auth";
 import { fileRouter } from "./file";
 import { bscaRouter } from "./tools/bsca";
+import { plaidRouter } from "./plaid";
 
 export const appRouter = router({
   auth: authRouter,

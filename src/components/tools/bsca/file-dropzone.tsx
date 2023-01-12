@@ -8,7 +8,11 @@ import {
 import { useSession } from "next-auth/react";
 import { type FileRejection, useDropzone } from "react-dropzone";
 import toast from "react-hot-toast";
-import { FilePlus2, FileX2, Wand2 } from "lucide-react";
+import { FilePlus2, FileX2, Link, Link2, Unlink2, Wand2 } from "lucide-react";
+
+// PLAID INTEGRATION START
+import { usePlaidLink } from "react-plaid-link";
+// PLAID INTEGRATION END
 
 import FileTable from "@/components/tools/bsca/file-table";
 import type { StoredFile } from "@/types/misc";
@@ -41,6 +45,64 @@ type Props = {
 };
 
 export default function FileDropzone({ codeTransactions }: Props): JSX.Element {
+  // PLAID INTEGRATION START
+  const [refetchPlaid, setRefetchPlaid] = useState([false]);
+  const [token, setToken] = useState(null);
+
+  useEffect(() => {
+    const createLinkToken = async () => {
+      const response = await fetch("/api/plaid/create-link-token", {
+        method: "POST",
+      });
+      const { link_token } = await response.json();
+      setToken(link_token);
+    };
+    createLinkToken();
+  }, []);
+
+  const onPlaidSuccess = useCallback(async (publicToken: string) => {
+    await fetch("/api/plaid/exchange-public-token", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ public_token: publicToken }),
+    });
+
+    // Router.push('/dash');
+    console.log("SUCCESSFULLY LINKED PLAID ACCOUNT!");
+    setRefetchPlaid([true]);
+  }, []);
+
+  const { open, ready } = usePlaidLink({
+    token,
+    onSuccess: onPlaidSuccess,
+  });
+
+  const unlinkPlaid = async () => {
+    await fetch("/api/plaid/unlink", {
+      method: "GET",
+    });
+    setRefetchPlaid([false]);
+    getPlaidTransactions();
+  };
+
+  const getPlaidTransactions = async () => {
+    const response = await fetch("/api/plaid/get-transactions", {
+      method: "GET",
+    });
+    const { transactions } = await response.json();
+
+    setPlaidTransactions(transactions);
+  };
+
+  const [plaidTransactions, setPlaidTransactions] = useState();
+  useEffect(() => {
+    getPlaidTransactions();
+  }, refetchPlaid);
+
+  // PLAID INTEGRATION END
+
   const { data: sessionData } = useSession();
   const [files, setFiles] = useState<File[]>([]);
   const [storedFiles, setStoredFiles] = useState<StoredFile[]>([]);
@@ -308,6 +370,51 @@ export default function FileDropzone({ codeTransactions }: Props): JSX.Element {
           </div>
         </div>
       )}
+
+      {/* Experimental feature: Plaid integration START */}
+      <br />
+      <div className="container flex flex-col items-center justify-center rounded-md border-2 bg-mono-50 p-4">
+        {plaidTransactions ? (
+          <>
+            <h3 className="text-lg font-extrabold">
+              Your bank is currently linked with Plaid.
+            </h3>
+            <p className="text-md text-center"></p>
+            <br />
+            <button
+              onClick={() => unlinkPlaid()}
+              disabled={!ready}
+              className="relative inline-flex cursor-pointer items-center rounded-md border border-transparent bg-red-600 px-6 py-2 text-sm font-medium text-white shadow-md hover:bg-red-500 focus:outline-none focus:ring-2 focus:ring-mono-500 focus:ring-offset-2"
+            >
+              <Unlink2 size={20} className="mr-2" />
+              <span>Unlink Account</span>
+            </button>
+            {/* Test: Raw data view */}
+            <br />
+            <code>{JSON.stringify(plaidTransactions, null, 2)}</code>
+          </>
+        ) : (
+          <>
+            <h3 className="text-lg font-extrabold">Want to try out Plaid?</h3>
+            <p className="text-md text-center">
+              Plaid is a third-party service that allows you to connect your
+              bank account to our application. This is a{" "}
+              <span className="font-bold">beta</span> feature, so please be
+              patient with us as we work out the kinks.
+            </p>
+            <br />
+            <button
+              onClick={() => open()}
+              disabled={!ready}
+              className="relative inline-flex cursor-pointer items-center rounded-md border border-transparent bg-mono-500 px-6 py-2 text-sm font-medium text-white shadow-md hover:bg-mono-400 focus:outline-none focus:ring-2 focus:ring-mono-500 focus:ring-offset-2"
+            >
+              <Link2 size={20} className="mr-2" />
+              <span>Link Account</span>
+            </button>
+          </>
+        )}
+      </div>
+      {/* Experimental feature: Plaid integration END */}
     </>
   );
 }

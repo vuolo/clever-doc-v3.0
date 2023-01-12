@@ -21,6 +21,9 @@ export const serverSchema = z.object({
   ),
   GOOGLE_CLIENT_ID: z.string(),
   GOOGLE_CLIENT_SECRET: z.string(),
+  PLAID_CLIENT_ID: z.string(),
+  PLAID_SECRET: z.string(),
+  PLAID_ENV: z.string(),
 });
 
 /**
