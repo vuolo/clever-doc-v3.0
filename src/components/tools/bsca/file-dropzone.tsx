@@ -104,6 +104,8 @@ export default function FileDropzone({ codeTransactions }: Props): JSX.Element {
     });
     if (response.status == 500) {
       getPlaidTransactions();
+      // We reload here because of our jank cookie system
+      window.location.reload();
       return;
     }
     const { transactions } = await response.json();
