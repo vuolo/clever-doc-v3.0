@@ -53,13 +53,20 @@ export async function parse({
       const fileBytes = Buffer.from(fileContents, "base64");
 
       // Parse the buffer as a workbook
-      const workSheetsFromBuffer = xlsx.parse(fileBytes);
+      const workSheetsFromBuffer = xlsx.parse(fileBytes, {
+        // header: 1,
+      });
+
+      // TODO: get the header which includes the period and company name...
 
       // Get the first worksheet that is not the name "QuickBooks Export Tips"
       const workSheet = workSheetsFromBuffer.find(
         (workSheet) => workSheet.name !== "QuickBooks Export Tips"
       );
       if (!workSheet) return;
+
+      // // Get the header
+      // console.log(workSheet.data);
 
       // Attempt to parse the Excel file as a General Ledger
       const generalLedger = new GeneralLedger(undefined, workSheet);
