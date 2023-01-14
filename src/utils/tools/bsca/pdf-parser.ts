@@ -7,12 +7,14 @@ import {
   protos as GoogleProtos,
 } from "@google-cloud/documentai";
 import GoogleDocument = GoogleProtos.google.cloud.documentai.v1.Document;
+import xlsx from "node-xlsx";
 
 import { prisma } from "@/server/db/client";
 import type { Coordinates, TextShard } from "@/types/ocr";
 import { getTextShardsAsLines } from "@/utils/ocr";
 import { BankStatement } from "./BankStatement";
 import { GeneralLedger } from "./GeneralLedger";
+import { workerData } from "worker_threads";
 
 const NUM_PAGES_PER_SPLIT = 10;
 const projectId = "176698041005";
@@ -41,6 +43,34 @@ export async function parse({
 
   const fileContents = file.contents.split("base64,")[1];
   if (!fileContents) return;
+
+  console.log("Parsing file... (" + file.name + ")");
+  if (!file.name.endsWith(".pdf")) {
+    if (file.name.endsWith(".csv")) {
+      return;
+    } else if (file.name.endsWith(".xlsx") || file.name.endsWith(".xls")) {
+      // Read the fileContents as a buffer
+      const fileBytes = Buffer.from(fileContents, "base64");
+
+      // Parse the buffer as a workbook
+      const workSheetsFromBuffer = xlsx.parse(fileBytes);
+
+      // Get the first worksheet that is not the name "QuickBooks Export Tips"
+      const workSheet = workSheetsFromBuffer.find(
+        (workSheet) => workSheet.name !== "QuickBooks Export Tips"
+      );
+      if (!workSheet) return;
+
+      // Attempt to parse the Excel file as a General Ledger
+      const generalLedger = new GeneralLedger(undefined, workSheet);
+      if (generalLedger.accounts.length > 0) return generalLedger;
+
+      return;
+    }
+
+    console.log("File is not a PDF, CSV, XLSX, or XLS");
+    return;
+  }
 
   // Split the PDF into multiple documents, because the Document AI processor can only process PDFs with a maximum of 10 pages
   const splitPDFs = await splitBase64PDF(fileContents);

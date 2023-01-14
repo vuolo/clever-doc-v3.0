@@ -270,7 +270,7 @@ export default function FileDropzone({ codeTransactions }: Props): JSX.Element {
           if (err.code === "file-too-large")
             toast.error("File too large. 10MB maximum.");
           else if (err.code === "file-invalid-type")
-            toast.error("Invalid file type. PDF files only.");
+            toast.error("Invalid file type. PDF and Excel files only.");
           else if (err.code === "too-many-files")
             toast.error(
               "Too many files. Please upload maximum 20 files at once."
@@ -284,7 +284,14 @@ export default function FileDropzone({ codeTransactions }: Props): JSX.Element {
 
   const { getRootProps, getInputProps, isFocused, isDragAccept, isDragReject } =
     useDropzone({
-      accept: { "application/pdf": [".pdf"] },
+      accept: {
+        "application/pdf": [".pdf"],
+        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": [
+          ".xlsx",
+        ],
+        "application/vnd.ms-excel": [".xls"],
+        "text/csv": [".csv"],
+      },
       multiple: true,
       minSize: 0,
       maxSize: 10485760, // 10MB
