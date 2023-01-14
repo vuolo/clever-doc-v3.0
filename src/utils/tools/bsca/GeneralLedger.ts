@@ -226,6 +226,9 @@ export class GeneralLedger {
 
     this.accounts = accounts;
 
+    // Reverse the accounts (so that we prioritize non-bank accounts during the coding process. This is a hacky solution)
+    this.accounts.reverse();
+
     // Right now we don't have a way to get the company name and period from the QuickBooks worksheet...
     this.company = {
       name: "Unknown Company",
